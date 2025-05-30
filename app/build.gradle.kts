@@ -51,6 +51,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.play.services.auth)
+    implementation(libs.play.services.maps)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -60,4 +62,30 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(platform("com.google.firebase:firebase-bom:33.14.0"))
     implementation("com.google.firebase:firebase-analytics")
+
+    // Firebase BOM (Bill of Materials) – 버전 관리 자동화
+    implementation (platform("com.google.firebase:firebase-bom:32.7.2")) // 최신 안정 버전 기준
+
+// Firebase 인증
+    implementation ("com.google.firebase:firebase-auth-ktx")
+
+// Firebase 실시간 데이터베이스 (사용 시)
+    implementation ("com.google.firebase:firebase-database-ktx")
+
+// Firebase Firestore (Cloud Firestore를 사용할 경우)
+    implementation ("com.google.firebase:firebase-firestore-ktx")
+// Jetpack Compose UI
+    implementation ("androidx.compose.ui:ui:1.5.4")
+    implementation ("androidx.compose.material3:material3:1.2.1")
+    implementation ("androidx.activity:activity-compose:1.8.2")
+
+// Lifecycle (ViewModel, State 관리용)
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+
+// Navigation (Compose Navigation 사용 시)
+    implementation ("androidx.navigation:navigation-compose:2.7.7")
+
+
+
 }

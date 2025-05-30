@@ -9,6 +9,9 @@ import com.example.tripcue.frame.uicomponents.AddContacts
 import com.example.tripcue.frame.uicomponents.Contacts
 import com.example.tripcue.frame.uicomponents.Favorites
 import com.example.tripcue.frame.uicomponents.Home
+import com.example.tripcue.frame.uicomponents.signup.FillProfileScreen
+import com.example.tripcue.frame.uicomponents.signup.LoginScreen
+import com.example.tripcue.frame.uicomponents.signup.SignUpScreen
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -28,5 +31,15 @@ fun NavGraph(navController: NavHostController) {
         composable(Routes.AddContacts.route){
             AddContacts()
         }
+        composable(Routes.Login.route) {
+            LoginScreen(navController)
+        }
+        composable(Routes.SignUp.route) {
+            SignUpScreen(navController)
+        }
+        composable(Routes.FillProfile.route) {
+            FillProfileScreen(navController)
+        }
+
     }
 }
