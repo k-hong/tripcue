@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
+    alias(libs.plugins.secrets.gradle.plugin)
+
 }
 
 android {
@@ -39,6 +41,10 @@ android {
         compose = true
     }
 }
+secrets {
+    propertiesFileName = "secrets.properties"
+    defaultPropertiesFileName = "local.defaults.properties"
+}
 
 dependencies {
 
@@ -53,6 +59,7 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.play.services.auth)
     implementation(libs.play.services.maps)
+    implementation(libs.naver.map.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -86,6 +93,7 @@ dependencies {
 // Navigation (Compose Navigation 사용 시)
     implementation ("androidx.navigation:navigation-compose:2.7.7")
 
+    implementation("com.naver.maps:map-sdk:3.21.0")
 
 
 }
