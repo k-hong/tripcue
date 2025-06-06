@@ -74,7 +74,7 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
 
     // Firebase BOM (Bill of Materials) – 버전 관리 자동화
-    implementation (platform("com.google.firebase:firebase-bom:32.7.2")) // 최신 안정 버전 기준
+//    implementation (platform("com.google.firebase:firebase-bom:32.7.2")) // 최신 안정 버전 기준
 
 // Firebase 인증
     implementation ("com.google.firebase:firebase-auth-ktx")

@@ -1,37 +1,31 @@
 package com.example.tripcue.frame.uicomponents.Schedule
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tripcue.frame.model.ScheduleData
-import com.example.tripcue.frame.model.Transportation
 import com.example.tripcue.frame.model.WeatherInfo
+import com.example.tripcue.frame.viewmodel.WeatherViewModel
 import java.time.LocalDate
+
+// 테스트용
+fun convertLocationToGrid(location: String): Pair<Int, Int> {
+    return when (location) {
+        "서울" -> 60 to 127
+        "부산" -> 98 to 76
+        // 실제 변환 로직 또는 Map DB 필요
+        else -> 60 to 127
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,15 +33,24 @@ fun InfoCardScreen(
     initialData: ScheduleData,
     onUpdate: (ScheduleData) -> Unit
 ) {
+    val viewModel: WeatherViewModel = viewModel()
+    val weatherInfo by viewModel.weatherInfo.collectAsState()
+
     var isEditing by remember { mutableStateOf(false) }
     var date by remember { mutableStateOf(LocalDate.parse(initialData.date)) }
     var location by remember { mutableStateOf(initialData.location) }
     var transportation by remember { mutableStateOf(initialData.transportation) }
-    var weatherStatus by remember { mutableStateOf(initialData.weather?.status ?: "") }
-    var temperature by remember { mutableStateOf(initialData.weather?.temperature?.toString() ?: "") }
     var details by remember { mutableStateOf(initialData.details) }
 
     var showDatePicker by remember { mutableStateOf(false) }
+
+    // 위치 → nx, ny 변환 필요, 예시로 임의값 사용
+    val (nx, ny) = convertLocationToGrid(location)
+
+    // 날짜 변경되거나 위치가 바뀌면 날씨 갱신
+    LaunchedEffect(date, nx, ny) {
+        viewModel.fetchWeatherForDateAndLocation(date, nx, ny)
+    }
 
     Card(
         modifier = Modifier
@@ -64,33 +67,25 @@ fun InfoCardScreen(
                 TextButton(
                     onClick = {
                         if (isEditing) {
-                            // 수정 완료
                             onUpdate(
                                 ScheduleData(
                                     date = date.toString(),
                                     location = location,
                                     transportation = transportation,
-                                    weather = WeatherInfo(
-                                        status = weatherStatus,
-                                        temperature = temperature.toDoubleOrNull() ?: 0.0
-                                    ),
+                                    weather = weatherInfo ?: WeatherInfo("정보 없음", 0.0),
                                     details = details
                                 )
                             )
                         }
                         isEditing = !isEditing
                     },
-                    modifier = Modifier
-                        .padding(4.dp),
-                    colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                    modifier = Modifier.padding(4.dp),
+                    colors = ButtonDefaults.textButtonColors(
                         containerColor = Color.LightGray,
                         contentColor = Color.Black
                     )
                 ) {
-                    Text(
-                        text = if (isEditing) "수정 완료하기" else "수정",
-                        fontSize = 12.sp
-                    )
+                    Text(text = if (isEditing) "수정 완료하기" else "수정", fontSize = 12.sp)
                 }
             }
 
@@ -112,17 +107,14 @@ fun InfoCardScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .then(
-                        if (isEditing) Modifier.clickable { showDatePicker = true }
-                        else Modifier
-                    )
+                    .then(if (isEditing) Modifier.clickable { showDatePicker = true } else Modifier)
             ) {
                 OutlinedTextField(
                     value = date.toString(),
                     onValueChange = {},
                     label = { Text("날짜", fontSize = 12.sp, color = Color.Gray) },
                     readOnly = true,
-                    enabled = false, // 아예 수정 불가하게 보이도록
+                    enabled = false,
                     modifier = Modifier.fillMaxWidth(),
                     textStyle = TextStyle(
                         fontWeight = FontWeight.Bold,
@@ -134,7 +126,7 @@ fun InfoCardScreen(
 
             if (showDatePicker) {
                 DatePickerDialog(
-                    initialDate = date,  // 반드시 넘겨줘야 함!
+                    initialDate = date,
                     onDismissRequest = { showDatePicker = false },
                     onDateChange = {
                         date = it
@@ -150,10 +142,10 @@ fun InfoCardScreen(
             )
 
             OutlinedTextField(
-                value = weatherStatus,
-                onValueChange = { weatherStatus = it },
-                label = { Text("날씨 상태", fontSize = 12.sp, color = Color.Gray) },
-                enabled = isEditing,
+                value = weatherInfo?.status ?: "",
+                onValueChange = {},
+                label = { Text("날씨 상태") },
+                enabled = false,
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = TextStyle(
                     fontWeight = FontWeight.Bold,
@@ -163,10 +155,10 @@ fun InfoCardScreen(
             )
 
             OutlinedTextField(
-                value = temperature,
-                onValueChange = { temperature = it },
-                label = { Text("기온 (℃)", fontSize = 12.sp, color = Color.Gray) },
-                enabled = isEditing,
+                value = weatherInfo?.temperature?.toString() ?: "",
+                onValueChange = {},
+                label = { Text("기온 (℃)") },
+                enabled = false,
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = TextStyle(
                     fontWeight = FontWeight.Bold,
@@ -191,19 +183,4 @@ fun InfoCardScreen(
             )
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun InfoCardScreenPreview() {
-    InfoCardScreen(
-        initialData = ScheduleData(
-            date = "2025-06-05",
-            location = "서울",
-            transportation = Transportation.BUS,
-            weather = WeatherInfo("맑음", 23.5),
-            details = "출근길 상세 정보"
-        ),
-        onUpdate = { /* Preview용 */ }
-    )
 }
