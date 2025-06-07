@@ -15,7 +15,7 @@ object WeatherRepository {
     // 이미 URL 인코딩된 인증키 사용
     private const val SERVICE_KEY = "Etc%2BmcUEPiCt0GoQHPGoc4OQZxgKwWHn6xKifSHGZ5nPMIWKeoMjplfAEFZqER%2FKjDrLJrIW4pdf5C9mUyU0WQ%3D%3D"
 
-    suspend fun fetchWeather(baseDate: String, baseTime: String, nx: Int, ny: Int): WeatherInfo? {
+    suspend fun fetchWeather(baseDate: String, baseTime: String, nx: Int, ny: Int, targetDate: String): WeatherInfo? {
         return withContext(Dispatchers.IO) {
             try {
                 val urlStr = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?" +
@@ -41,18 +41,25 @@ object WeatherRepository {
                 var pty = "0"
                 var sky = "1"
 
-                // 필요한 데이터만 파싱
+                // targetDate (yyyyMMdd)와 fcstDate가 같은 데이터만 처리
                 for (i in 0 until items.length()) {
                     val item = items.getJSONObject(i)
-                    when (item.getString("category")) {
-                        "TMP" -> tmp = item.getString("fcstValue").toDouble()
-                        "PTY" -> pty = item.getString("fcstValue")
-                        "SKY" -> sky = item.getString("fcstValue")
+                    if (item.getString("fcstDate") == targetDate) {
+                        when (item.getString("category")) {
+                            "TMP" -> tmp = item.getString("fcstValue").toDouble()
+                            "PTY" -> pty = item.getString("fcstValue")
+                            "SKY" -> sky = item.getString("fcstValue")
+                        }
                     }
                 }
 
                 val weatherStatus = decodeWeatherStatus(pty, sky)
-                WeatherInfo(weatherStatus, tmp)
+                val weatherInfo = WeatherInfo(weatherStatus, tmp)
+
+                // 로그 출력
+                Log.d("WeatherCheck", "날씨 상태: ${weatherInfo.status}, 기온: ${weatherInfo.temperature}℃")
+
+                weatherInfo
 
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -92,10 +99,10 @@ object WeatherRepository {
             val hour = now.get(Calendar.HOUR_OF_DAY)
             val minute = now.get(Calendar.MINUTE)
             String.format("%02d%02d", hour, minute)
-        } else "2300"
+        } else "1400"
 
         // 현재 시각보다 작거나 같은 가장 최근 발표시간 선택
-        return baseTimes.firstOrNull { it <= currentTime } ?: "2300"
+        return baseTimes.firstOrNull { it <= currentTime } ?: "1400"
     }
 
     // baseDate와 baseTime을 한꺼번에 얻는 함수

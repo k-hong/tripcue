@@ -1,5 +1,6 @@
 package com.example.tripcue.frame.uicomponents.Schedule
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,11 +45,9 @@ fun InfoCardScreen(
 
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // 위치 → nx, ny 변환 필요, 예시로 임의값 사용
-    val (nx, ny) = convertLocationToGrid(location)
-
     // 날짜 변경되거나 위치가 바뀌면 날씨 갱신
-    LaunchedEffect(date, nx, ny) {
+    LaunchedEffect(date, location) {
+        val (nx, ny) = convertLocationToGrid(location)
         viewModel.fetchWeatherForDateAndLocation(date, nx, ny)
     }
 
