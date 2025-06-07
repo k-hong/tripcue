@@ -13,17 +13,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.tripcue.frame.model.ScheduleData
 import com.example.tripcue.frame.model.WeatherInfo
+import com.example.tripcue.frame.viewmodel.ScheduleViewModel
 import com.example.tripcue.frame.viewmodel.WeatherViewModel
+import com.google.gson.Gson
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 import java.time.LocalDate
+import java.time.format.DateTimeParseException
 
 // 테스트용
 fun convertLocationToGrid(location: String): Pair<Int, Int> {
     return when (location) {
         "서울" -> 60 to 127
         "부산" -> 98 to 76
-        // 실제 변환 로직 또는 Map DB 필요
         else -> 60 to 127
     }
 }
@@ -31,97 +36,105 @@ fun convertLocationToGrid(location: String): Pair<Int, Int> {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InfoCardScreen(
-    initialData: ScheduleData,
-    onUpdate: (ScheduleData) -> Unit
+    navController: NavController,
 ) {
-    val viewModel: WeatherViewModel = viewModel()
-    val weatherInfo by viewModel.weatherInfo.collectAsState()
+    val weatherViewModel: WeatherViewModel = viewModel()
+    val scheduleViewModel: ScheduleViewModel = viewModel()
+    val selectedSchedule by scheduleViewModel.selectedSchedule.collectAsState()
+
+    if (selectedSchedule == null) {
+        Text("선택된 일정이 없습니다.")
+        return
+    }
+
+    val initialSchedule = selectedSchedule!!
 
     var isEditing by remember { mutableStateOf(false) }
-    var date by remember { mutableStateOf(LocalDate.parse(initialData.date)) }
-    var location by remember { mutableStateOf(initialData.location) }
-    var transportation by remember { mutableStateOf(initialData.transportation) }
-    var details by remember { mutableStateOf(initialData.details) }
 
+    val parsedDate = try {
+        LocalDate.parse(initialSchedule.date)
+    } catch (e: DateTimeParseException) {
+        LocalDate.now()
+    }
+
+    var location by remember { mutableStateOf(initialSchedule.location) }
+    var date by remember { mutableStateOf(parsedDate) }
+    var transportation by remember { mutableStateOf(initialSchedule.transportation) }
+    var details by remember { mutableStateOf(initialSchedule.details) }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // 날짜 변경되거나 위치가 바뀌면 날씨 갱신
-    LaunchedEffect(date, location) {
-        val (nx, ny) = convertLocationToGrid(location)
-        viewModel.fetchWeatherForDateAndLocation(date, nx, ny)
+    val weatherInfo by weatherViewModel.weatherInfo.collectAsState()
+
+    // 날짜 + 위치 변경 시 날씨 정보 가져오기
+    LaunchedEffect(location, date) {
+        if (location.isNotBlank()) {
+            val (nx, ny) = convertLocationToGrid(location)
+            weatherViewModel.fetchWeatherForDateAndLocation(date, nx, ny)
+        }
+    }
+
+    fun onSave() {
+        val updatedSchedule = initialSchedule.copy(
+            location = location,
+            date = date.toString(),
+            transportation = transportation,
+            details = details
+        )
+        scheduleViewModel.updateSchedule(updatedSchedule)
+        navController.popBackStack()
     }
 
     Card(
         modifier = Modifier
-            .fillMaxWidth(0.7f)
+            .fillMaxWidth(0.9f)
             .padding(16.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
             ) {
                 TextButton(
                     onClick = {
-                        if (isEditing) {
-                            onUpdate(
-                                ScheduleData(
-                                    date = date.toString(),
-                                    location = location,
-                                    transportation = transportation,
-                                    weather = weatherInfo ?: WeatherInfo("정보 없음", 0.0),
-                                    details = details
-                                )
-                            )
-                        }
+                        if (isEditing) onSave()
                         isEditing = !isEditing
                     },
-                    modifier = Modifier.padding(4.dp),
                     colors = ButtonDefaults.textButtonColors(
                         containerColor = Color.LightGray,
                         contentColor = Color.Black
                     )
                 ) {
-                    Text(text = if (isEditing) "수정 완료하기" else "수정", fontSize = 12.sp)
+                    Text(text = if (isEditing) "수정 완료" else "수정", fontSize = 14.sp)
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
                 value = location,
-                onValueChange = { location = it },
+                onValueChange = { if (isEditing) location = it },
                 label = { Text("위치", fontSize = 12.sp, color = Color.Gray) },
                 enabled = isEditing,
                 modifier = Modifier.fillMaxWidth(),
-                textStyle = TextStyle(
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    fontSize = 14.sp
-                )
+                textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
             )
 
-            Box(
+            OutlinedTextField(
+                value = date.toString(),
+                onValueChange = {},
+                label = { Text("날짜", fontSize = 12.sp, color = Color.Gray) },
+                enabled = false,
+                readOnly = true,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .then(if (isEditing) Modifier.clickable { showDatePicker = true } else Modifier)
-            ) {
-                OutlinedTextField(
-                    value = date.toString(),
-                    onValueChange = {},
-                    label = { Text("날짜", fontSize = 12.sp, color = Color.Gray) },
-                    readOnly = true,
-                    enabled = false,
-                    modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black,
-                        fontSize = 14.sp
-                    )
-                )
-            }
+                    .then(
+                        if (isEditing) Modifier.clickable { showDatePicker = true }
+                        else Modifier
+                    ),
+                textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            )
 
             if (showDatePicker) {
                 DatePickerDialog(
@@ -136,7 +149,7 @@ fun InfoCardScreen(
 
             DropdownMenuBox(
                 selected = transportation,
-                onSelect = { transportation = it },
+                onSelect = { if (isEditing) transportation = it },
                 enabled = isEditing
             )
 
@@ -168,17 +181,13 @@ fun InfoCardScreen(
 
             OutlinedTextField(
                 value = details,
-                onValueChange = { details = it },
+                onValueChange = { if (isEditing) details = it },
                 label = { Text("상세 정보", fontSize = 12.sp, color = Color.Gray) },
                 enabled = isEditing,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp),
-                textStyle = TextStyle(
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    fontSize = 14.sp
-                )
+                textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
             )
         }
     }

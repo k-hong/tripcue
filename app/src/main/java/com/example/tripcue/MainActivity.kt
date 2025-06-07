@@ -8,15 +8,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.model.ScheduleData
 import com.example.tripcue.frame.model.Transportation
 import com.example.tripcue.frame.model.WeatherInfo
 import com.example.tripcue.frame.uicomponents.MainScreen2
+import com.example.tripcue.frame.uicomponents.Schedule.AddScheduleTest
 import com.example.tripcue.frame.uicomponents.Schedule.InfoCardScreen
+import com.example.tripcue.frame.uicomponents.Schedule.InventoryScheduleTest
 import com.example.tripcue.frame.uicomponents.signup.FillProfileScreen
 import com.example.tripcue.frame.uicomponents.signup.LoginScreen
 import com.example.tripcue.frame.uicomponents.signup.SignUpScreen
@@ -26,42 +30,41 @@ import java.time.LocalDate
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+//        enableEdgeToEdge()
         setContent {
-            TripcueTheme {
-                MainScreen2()
-            }
+//            TripcueTheme {
+//                MainScreen2()
+//            }
             val navController = rememberNavController()
 
             // 👇 항상 LoginScreen부터 시작하도록 지정
-            NavHost(
-                navController = navController, startDestination = Routes.Login.route
-            ) {
-                composable(Routes.Login.route) {
-                    LoginScreen(navController)
+//            NavHost(
+//                navController = navController, startDestination = Routes.Login.route
+//            ) {
+//                composable(Routes.Login.route) {
+//                    LoginScreen(navController)
+//                }
+//                composable(Routes.SignUp.route) {
+//                    SignUpScreen(navController)
+//                }
+//                composable(Routes.FillProfile.route) {
+//                    FillProfileScreen(navController)
+//                }
+//                composable(Routes.Home.route) {
+//                    MainScreen2()
+//                }
+//            }
+            NavHost(navController = navController, startDestination = Routes.InventSchedule.route) {
+                composable(Routes.InventSchedule.route) {
+                    InventoryScheduleTest(navController)
                 }
-                composable(Routes.SignUp.route) {
-                    SignUpScreen(navController)
+                composable(Routes.AddSchedule.route) {
+                    AddScheduleTest(navController)
                 }
-                composable(Routes.FillProfile.route) {
-                    FillProfileScreen(navController)
-                }
-                composable(Routes.Home.route) {
-                    MainScreen2()
+                composable(Routes.InfoCard.route) {
+                    InfoCardScreen(navController)
                 }
             }
-//            InfoCardScreen(
-//                initialData = ScheduleData(
-//                    date = LocalDate.now().toString(),
-//                    location = "서울",
-//                    transportation = Transportation.BUS,
-//                    weather = WeatherInfo("맑음", 24.5)
-//                ),
-//                onUpdate = { updated ->
-//                    // 여기서 업데이트된 정보를 저장하거나 출력할 수 있어요
-//                    println("수정된 데이터: $updated")
-//                }
-//            )
         }
     }
 }
