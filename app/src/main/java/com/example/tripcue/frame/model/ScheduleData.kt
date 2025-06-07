@@ -3,6 +3,7 @@ package com.example.tripcue.frame.model
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.RawValue
+import java.time.LocalDate
 
 enum class Transportation(val displayName: String) {
     WALK("걷기"),
@@ -29,3 +30,11 @@ data class ScheduleData(
     var weather: @RawValue WeatherInfo? = null,
     var details: String = ""
 ): Parcelable
+
+data class ScheduleTitle(
+    val title : String,
+    val location: String,
+    val startDate: LocalDate,
+    val endDate: LocalDate,
+    var ScheduleData : MutableList<ScheduleData> = mutableListOf() // 카드 클릭시 세부 일정표로 이동
+)

@@ -9,10 +9,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.model.ScheduleData
-import com.example.tripcue.frame.uicomponents.AddContacts
-import com.example.tripcue.frame.uicomponents.Contacts
-import com.example.tripcue.frame.uicomponents.Favorites
 import com.example.tripcue.frame.uicomponents.Home
+import com.example.tripcue.frame.uicomponents.AddSchedule
+import com.example.tripcue.frame.uicomponents.Schedules
 import com.example.tripcue.frame.uicomponents.Schedule.AddScheduleTest
 import com.example.tripcue.frame.uicomponents.Schedule.InfoCardScreen
 import com.example.tripcue.frame.uicomponents.Schedule.InventoryScheduleTest
@@ -31,17 +30,18 @@ fun NavGraph(navController: NavHostController) {
         startDestination = Routes.Home.route
     ){
         composable(Routes.Home.route){
-            Home()
+            Home() // 홈 화면
         }
-        composable(Routes.Contacts.route){
-            Contacts()
+        composable(Routes.AddSchedule.route){
+            AddSchedule( onDone = {
+                navController.popBackStack() // 또는 안전하게 Home으로 이동
+                // navController.navigate(Routes.Home.route) { popUpTo(Routes.Home.route) { inclusive = true } }
+            }) // 일정 화면
         }
-        composable(Routes.Favorites.route){
-            Favorites()
+        composable(Routes.Schedules.route){
+            Schedules() // 일정 화면
         }
-        composable(Routes.AddContacts.route){
-            AddContacts()
-        }
+
         composable(Routes.Login.route) {
             LoginScreen(navController)
         }
@@ -51,9 +51,8 @@ fun NavGraph(navController: NavHostController) {
         composable(Routes.FillProfile.route) {
             FillProfileScreen(navController)
         }
-        composable(Routes.AddSchedule.route) {
-            AddScheduleTest(navController)
-        }
+
+
         composable(Routes.InventSchedule.route) {
             InventoryScheduleTest(navController)
         }

@@ -99,9 +99,9 @@ fun MainScreen2(modifier: Modifier = Modifier) {
                     BottomNavigationBar(navController)
             },
             floatingActionButton = {
-                if (currentRoute == Routes.Contacts)
+                if (currentRoute == Routes.Schedules)
                     FloatingActionButton(onClick = {
-                        navController.navigate(Routes.AddContacts.route)
+                        navController.navigate(Routes.AddSchedule.route)
                     }) {
                         Icon(imageVector = Icons.Default.Add, contentDescription = "")
                     }

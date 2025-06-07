@@ -38,23 +38,22 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
 
             // 👇 항상 LoginScreen부터 시작하도록 지정
-//            NavHost(
-//                navController = navController, startDestination = Routes.Login.route
-//            ) {
-//                composable(Routes.Login.route) {
-//                    LoginScreen(navController)
-//                }
-//                composable(Routes.SignUp.route) {
-//                    SignUpScreen(navController)
-//                }
-//                composable(Routes.FillProfile.route) {
-//                    FillProfileScreen(navController)
-//                }
-//                composable(Routes.Home.route) {
-//                    MainScreen2()
-//                }
-//            }
-            NavHost(navController = navController, startDestination = Routes.InventSchedule.route) {
+            NavHost(navController = navController, startDestination = Routes.Home.route)
+            {
+                composable(Routes.Login.route) {
+                    LoginScreen(navController)
+                }
+                composable(Routes.SignUp.route) {
+                    SignUpScreen(navController)
+                }
+                composable(Routes.FillProfile.route) {
+                    FillProfileScreen(navController)
+                }
+                composable(Routes.Home.route) {
+                    MainScreen2()
+                }
+            }
+        /*    NavHost(navController = navController, startDestination = Routes.InventSchedule.route) {
                 composable(Routes.InventSchedule.route) {
                     InventoryScheduleTest(navController)
                 }
@@ -64,7 +63,7 @@ class MainActivity : ComponentActivity() {
                 composable(Routes.InfoCard.route) {
                     InfoCardScreen(navController)
                 }
-            }
+            }*/
         }
     }
 }

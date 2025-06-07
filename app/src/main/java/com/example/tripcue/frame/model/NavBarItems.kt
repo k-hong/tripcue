@@ -17,16 +17,16 @@ object NavBarItems{
             route = Routes.Home.route
         ),
         BarItem(
-            title = Routes.Contacts.route,
+            title = Routes.AddSchedule.route,
             selectIcon = Icons.Default.Person,
             onSelectedIcon = Icons.Outlined.Person,
-            route = Routes.Contacts.route
+            route = Routes.AddSchedule.route
         ),
         BarItem(
-            title = Routes.Favorites.route,
+            title = Routes.Schedules.route,
             selectIcon = Icons.Default.Favorite,
             onSelectedIcon = Icons.Outlined.FavoriteBorder,
-            route = Routes.Favorites.route,
+            route = Routes.Schedules.route,
         )
     )
 }
