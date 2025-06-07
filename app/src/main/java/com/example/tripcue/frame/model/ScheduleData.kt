@@ -1,6 +1,8 @@
 package com.example.tripcue.frame.model
 
 import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.RawValue
 
 enum class Transportation(val displayName: String) {
     WALK("걷기"),
@@ -18,11 +20,12 @@ data class WeatherInfo(
     val temperature: Double  // 예: 23.5 (섭씨)
 )
 
+@Parcelize
 data class ScheduleData(
     val id: String = "",
     var location: String = "",
     var date: String = "",
     var transportation: Transportation = Transportation.WALK,
-    var weather: WeatherInfo? = null,
+    var weather: @RawValue WeatherInfo? = null,
     var details: String = ""
-)
+): Parcelable

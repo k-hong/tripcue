@@ -28,8 +28,10 @@ import androidx.navigation.NavController
 import com.example.tripcue.frame.viewmodel.ScheduleViewModel
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavHostController
 import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.model.ScheduleData
@@ -64,7 +66,8 @@ fun InventoryScheduleTest(navController: NavHostController) {
             items(schedules.size) { index ->
                 val schedule = schedules[index]
                 ScheduleCard(schedule = schedule) {
-                    scheduleViewModel.selectSchedule(schedule) // ViewModel에 선택 저장
+                    navController.currentBackStackEntry?.savedStateHandle?.set("selectedSchedule", schedule)
+                    // scheduleViewModel.selectSchedule(schedule) // ViewModel에 선택 저장
                     navController.navigate(Routes.InfoCard.route) // JSON 제거
                 }
                 Spacer(modifier = Modifier.height(8.dp))

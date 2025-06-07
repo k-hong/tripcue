@@ -1,6 +1,8 @@
 package com.example.tripcue.frame.uicomponents.Schedule
 
 import android.util.Log
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,12 +10,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.model.ScheduleData
 import com.example.tripcue.frame.model.WeatherInfo
 import com.example.tripcue.frame.viewmodel.ScheduleViewModel
@@ -40,7 +45,10 @@ fun InfoCardScreen(
 ) {
     val weatherViewModel: WeatherViewModel = viewModel()
     val scheduleViewModel: ScheduleViewModel = viewModel()
-    val selectedSchedule by scheduleViewModel.selectedSchedule.collectAsState()
+    // val selectedSchedule by scheduleViewModel.selectedSchedule.collectAsState()
+    val selectedSchedule = navController.previousBackStackEntry
+        ?.savedStateHandle
+        ?.get<ScheduleData>("selectedSchedule")
 
     if (selectedSchedule == null) {
         Text("선택된 일정이 없습니다.")

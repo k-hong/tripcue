@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
     alias(libs.plugins.secrets.gradle.plugin)
+    alias(libs.plugins.kotlin.parcelize)
 
 }
 
