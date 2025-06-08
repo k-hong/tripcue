@@ -1,3 +1,4 @@
+// ✅ LoginScreen.kt (기존 필드 보존을 위한 merge 적용)
 package com.example.tripcue.frame.uicomponents.signup
 
 import android.app.Activity
@@ -34,6 +35,7 @@ import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -84,12 +86,29 @@ fun LoginScreen(navController: NavController) {
 
                                 firestore.collection("users")
                                     .document(user.uid)
-                                    .set(userInfo)
+                                    .set(userInfo, SetOptions.merge()) // ✅ merge로 기존 필드 보존
                                     .addOnSuccessListener {
                                         Log.d("Firestore", "사용자 정보 저장 성공")
-                                        navController.navigate(Routes.Home.route) {
-                                            popUpTo(Routes.Login.route) { inclusive = true }
-                                        }
+
+                                        // 설문 입력 필요 여부 판단
+                                        firestore.collection("users").document(user.uid).get()
+                                            .addOnSuccessListener { document ->
+                                                val hasExtraFields = document.contains("nickname")
+                                                        && document.contains("age")
+                                                        && document.contains("gender")
+                                                        && document.contains("region")
+                                                        && document.contains("interests")
+
+                                                if (hasExtraFields) {
+                                                    navController.navigate(Routes.Home.route) {
+                                                        popUpTo(Routes.Login.route) { inclusive = true }
+                                                    }
+                                                } else {
+                                                    navController.navigate("fill_profile_survey") {
+                                                        popUpTo(Routes.Login.route) { inclusive = true }
+                                                    }
+                                                }
+                                            }
                                     }
                                     .addOnFailureListener { e ->
                                         Log.e("Firestore", "사용자 정보 저장 실패", e)

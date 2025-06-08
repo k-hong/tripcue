@@ -99,5 +99,5 @@ dependencies {
 
     implementation("com.naver.maps:map-sdk:3.21.0")
 
-
+    implementation("io.coil-kt:coil-compose:2.4.0")
 }

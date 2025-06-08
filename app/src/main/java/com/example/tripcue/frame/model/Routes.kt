@@ -10,6 +10,8 @@ sealed class Routes (val route: String, val isRoot : Boolean = true) {
     object AddSchedule : Routes(route = "AddScheduleTest", isRoot = false)
     object InventSchedule : Routes(route = "InventoryScheduleTest", isRoot = false)
     object InfoCard : Routes(route = "InfoCardScreen", isRoot = false)
+    object FillProfileSurvey : Routes(route = "fill_profile_survey", isRoot = false)
+
 
     companion object{
         fun getRoutes(route: String): Routes {
@@ -23,6 +25,8 @@ sealed class Routes (val route: String, val isRoot : Boolean = true) {
                 AddSchedule.route -> AddSchedule
                 InventSchedule.route -> InventSchedule
                 InfoCard.route -> InfoCard
+                FillProfileSurvey.route -> FillProfileSurvey
+
                 else -> Home
             }
         }

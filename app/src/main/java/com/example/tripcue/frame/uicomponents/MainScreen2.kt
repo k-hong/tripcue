@@ -1,6 +1,8 @@
+// ✅ MainScreen2.kt (isEditMode 상태 추가)
 package com.example.tripcue.frame.uicomponents
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -11,7 +13,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
@@ -21,42 +22,44 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.navigation.BottomNavigationBar
-import com.example.tripcue.frame.navigation.NavGraph
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen2(modifier: Modifier = Modifier) {
-    val navController = rememberNavController()
+fun MainScreen2(navController: NavHostController) {
     val backStackEntry by navController.currentBackStackEntryAsState()
-    //val currentRoute = backStackEntry?.destination?.route
     val currentRoute by remember(backStackEntry) {
         derivedStateOf {
             backStackEntry?.destination?.route?.let {
                 Routes.getRoutes(it)
-            } ?: run {
-                Routes.Home
-            }
+            } ?: Routes.Home
         }
     }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
+
+    var isEditMode by remember { mutableStateOf(false) } // ✅ 상태 변수 추가
+
     ModalNavigationDrawer(
         drawerState = drawerState,
-        drawerContent =  {
+        drawerContent = {
             ModalDrawerSheet {
-                DrawerContent()
+                DrawerContent(
+                    isEditMode = isEditMode,
+                    onEditClick = { isEditMode = true },
+                    onDoneClick = { isEditMode = false }
+                )
             }
         }
-
     ) {
         Scaffold(
             topBar = {
@@ -65,19 +68,16 @@ fun MainScreen2(modifier: Modifier = Modifier) {
                         title = { Text(text = currentRoute.route) },
                         navigationIcon = {
                             IconButton(onClick = {
-                                coroutineScope.launch{
+                                coroutineScope.launch {
                                     if (drawerState.isOpen) drawerState.close() else drawerState.open()
                                 }
-
-
                             }) {
                                 Icon(
                                     imageVector = Icons.Default.Menu,
-                                    contentDescription = ""
+                                    contentDescription = null
                                 )
                             }
                         }
-
                     )
                 else
                     TopAppBar(
@@ -88,7 +88,7 @@ fun MainScreen2(modifier: Modifier = Modifier) {
                             }) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                    contentDescription = ""
+                                    contentDescription = null
                                 )
                             }
                         }
@@ -103,20 +103,18 @@ fun MainScreen2(modifier: Modifier = Modifier) {
                     FloatingActionButton(onClick = {
                         navController.navigate(Routes.AddSchedule.route)
                     }) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = "")
+                        Icon(imageVector = Icons.Default.Add, contentDescription = null)
                     }
             }
         ) { contentPadding ->
-            Column(modifier = Modifier.padding(contentPadding)) {
-                NavGraph(navController = navController)
+            Box(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
+                when (currentRoute) {
+                    Routes.Home -> Home()
+                    //Routes.Schedules -> Schedules()
+                    //Routes.AddSchedule -> AddScheduleTest(navController)
+                    else -> Text("페이지를 찾을 수 없습니다")
+                }
             }
         }
-    }
-}
-@Preview
-@Composable
-private fun MainScreenPreview() {
-    MaterialTheme {
-        MainScreen2()
     }
 }
