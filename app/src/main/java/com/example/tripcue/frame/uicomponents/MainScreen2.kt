@@ -31,6 +31,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.navigation.BottomNavigationBar
+import com.example.tripcue.frame.uicomponents.home.Home
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

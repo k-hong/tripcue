@@ -1,4 +1,4 @@
-// ✅ DrawerContent.kt (저장 후 UI 반영 + photoUrl 이미지 적용)
+// ✅ DrawerContent.kt (지역 드롭다운 → 텍스트 입력으로 되돌림)
 package com.example.tripcue.frame.uicomponents
 
 import androidx.compose.foundation.Image
@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
@@ -47,6 +48,7 @@ fun ColumnScope.DrawerContent(
 ) {
     val user = FirebaseAuth.getInstance().currentUser
     val db = FirebaseFirestore.getInstance()
+    val context = LocalContext.current
 
     var nickname by remember { mutableStateOf("username") }
     var selectedTags by remember { mutableStateOf(listOf<String>()) }
@@ -72,16 +74,11 @@ fun ColumnScope.DrawerContent(
                     nickname = doc.getString("nickname") ?: "username"
                     region = doc.getString("region") ?: ""
                     selectedTags = doc.get("interests") as? List<String> ?: emptyList()
+                    newNickname = nickname
+                    newRegion = region
+                    newSelectedTags = selectedTags
                     isLoading = false
                 }
-        }
-    }
-
-    LaunchedEffect(isEditMode) {
-        if (isEditMode) {
-            newNickname = nickname
-            newRegion = region
-            newSelectedTags = selectedTags
         }
     }
 
@@ -119,18 +116,21 @@ fun ColumnScope.DrawerContent(
             modifier = Modifier.padding(horizontal = 16.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
+
+        // ✅ 지역 텍스트 입력 필드 복원
         OutlinedTextField(
             value = newRegion,
             onValueChange = { newRegion = it },
             label = { Text("지역") },
             modifier = Modifier.padding(horizontal = 16.dp)
         )
+
         Spacer(modifier = Modifier.height(8.dp))
         Text("관심사 선택", modifier = Modifier.padding(start = 16.dp))
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             modifier = Modifier
-                .height(300.dp)
+                .height(200.dp)
                 .padding(8.dp)
         ) {
             items(interestOptions) { tag ->

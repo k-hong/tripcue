@@ -20,6 +20,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "DEFAULT_CLIENT_ID", "\"${properties["NAVER_CLIENT_ID"]}\"")
+        buildConfigField("String", "DEFAULT_CLIENT_SECRET", "\"${properties["NAVER_CLIENT_SECRET"]}\"")
     }
 
     buildTypes {
@@ -40,6 +42,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 secrets {
@@ -100,4 +103,7 @@ dependencies {
     implementation("com.naver.maps:map-sdk:3.21.0")
 
     implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
 }
