@@ -35,7 +35,6 @@ fun NavGraph(navController: NavHostController) {
             FillProfileSurveyScreen(navController)
         }
 
-        // 로그인 후 메인화면 (Scaffold 포함)
         composable(Routes.Home.route) {
             MainScreen2(navController)
         }

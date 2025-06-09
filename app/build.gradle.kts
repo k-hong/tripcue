@@ -39,9 +39,9 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "NAVER_CLIENT_ID", "\"${getApiKey("NAVER_CLIENT_ID")}\"")
-        buildConfigField("String", "NAVER_CLIENT_SECRET", "\"${getApiKey("NAVER_CLIENT_SECRET")}\"")
+        buildConfigField("String", "NAVER_D_CLIENT_ID", "\"${getApiKey("NAVER_D_CLIENT_ID")}\"")
+        buildConfigField("String", "NAVER_D_CLIENT_SECRET", "\"${getApiKey("NAVER_D_CLIENT_SECRET")}\"")
         manifestPlaceholders["NAVER_CLIENT_ID"] = getApiKey("NAVER_CLIENT_ID")
-        manifestPlaceholders["NAVER_CLIENT_SECRET"] = getApiKey("NAVER_CLIENT_SECRET")
 
 
     }
