@@ -16,6 +16,7 @@
         <meta-data
             android:name="com.naver.maps.map.NCP_KEY_ID"
             android:value="${NAVER_CLIENT_ID}" />
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDpdDZB6q03n1opRfps-Px00owneoB6LHY" />

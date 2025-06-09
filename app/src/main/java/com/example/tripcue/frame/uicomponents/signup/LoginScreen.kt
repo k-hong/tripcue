@@ -1,4 +1,3 @@
-// ✅ LoginScreen.kt (기존 필드 보존을 위한 merge 적용)
 package com.example.tripcue.frame.uicomponents.signup
 
 import android.app.Activity
@@ -7,21 +6,10 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -86,25 +74,23 @@ fun LoginScreen(navController: NavController) {
 
                                 firestore.collection("users")
                                     .document(user.uid)
-                                    .set(userInfo, SetOptions.merge()) // ✅ merge로 기존 필드 보존
+                                    .set(userInfo, SetOptions.merge())
                                     .addOnSuccessListener {
                                         Log.d("Firestore", "사용자 정보 저장 성공")
 
-                                        // 설문 입력 필요 여부 판단
                                         firestore.collection("users").document(user.uid).get()
                                             .addOnSuccessListener { document ->
-                                                val hasExtraFields = document.contains("nickname")
-                                                        && document.contains("age")
-                                                        && document.contains("gender")
-                                                        && document.contains("region")
-                                                        && document.contains("interests")
+                                                val hasExtraFields =
+                                                    document.getString("nickname") != null &&
+                                                            document.getString("region") != null &&
+                                                            (document.get("interests") as? List<*>)?.isNotEmpty() == true
 
                                                 if (hasExtraFields) {
                                                     navController.navigate(Routes.Home.route) {
                                                         popUpTo(Routes.Login.route) { inclusive = true }
                                                     }
                                                 } else {
-                                                    navController.navigate("fill_profile_survey") {
+                                                    navController.navigate(Routes.FillProfileSurvey.route) {
                                                         popUpTo(Routes.Login.route) { inclusive = true }
                                                     }
                                                 }

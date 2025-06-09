@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -7,7 +9,23 @@ plugins {
     alias(libs.plugins.kotlin.parcelize)
 
 }
+fun getApiKey(propertyName: String): String {
+    val secretsFile = rootProject.file("secrets.properties")
+    val fallbackFile = rootProject.file("local.defaults.properties")
 
+    val properties = Properties()
+    val usedFile = if (secretsFile.exists()) {
+        properties.load(secretsFile.inputStream())
+        secretsFile
+    } else {
+        properties.load(fallbackFile.inputStream())
+        fallbackFile
+    }
+
+    val value = properties.getProperty(propertyName)
+    println("🔍 API KEY READ: $propertyName = ${value ?: "NOT FOUND"} (from ${usedFile.name})")
+    return value ?: ""
+}
 android {
     namespace = "com.example.tripcue"
     compileSdk = 35
@@ -20,17 +38,19 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "DEFAULT_CLIENT_ID", "\"${properties["NAVER_CLIENT_ID"]}\"")
-        buildConfigField("String", "DEFAULT_CLIENT_SECRET", "\"${properties["NAVER_CLIENT_SECRET"]}\"")
+        buildConfigField("String", "NAVER_CLIENT_ID", "\"${getApiKey("NAVER_CLIENT_ID")}\"")
+        buildConfigField("String", "NAVER_CLIENT_SECRET", "\"${getApiKey("NAVER_CLIENT_SECRET")}\"")
+        manifestPlaceholders["NAVER_CLIENT_ID"] = getApiKey("NAVER_CLIENT_ID")
+        manifestPlaceholders["NAVER_CLIENT_SECRET"] = getApiKey("NAVER_CLIENT_SECRET")
+
+
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+
         }
     }
     compileOptions {

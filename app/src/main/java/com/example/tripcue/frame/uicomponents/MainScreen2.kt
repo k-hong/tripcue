@@ -48,7 +48,7 @@ fun MainScreen2(navController: NavHostController) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
 
-    var isEditMode by remember { mutableStateOf(false) } // ✅ 상태 변수 추가
+    var isEditMode by remember { mutableStateOf(false) }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
