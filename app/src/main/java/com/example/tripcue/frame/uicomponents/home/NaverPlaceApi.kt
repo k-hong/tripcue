@@ -6,7 +6,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
-import android.util.Log  // 추가
+import android.util.Log
 
 object NaverPlaceApi {
     suspend fun searchPlaces(region: String, keywords: List<String>): List<String> {
@@ -17,10 +17,10 @@ object NaverPlaceApi {
             try {
                 val query = "$region $keyword"
                 val url = "https://openapi.naver.com/v1/search/local.json?query=${query}&display=10"
-                Log.d("NaverAPI", "🧪 현재 Client ID = ${BuildConfig.NAVER_D_CLIENT_ID}")
-                Log.d("NaverAPI", "🧪 현재 Client ID = ${BuildConfig.NAVER_D_CLIENT_SECRET}")
+                Log.d("NaverAPI", "현재 Client ID = ${BuildConfig.NAVER_D_CLIENT_ID}")
+                Log.d("NaverAPI", "현재 Client ID = ${BuildConfig.NAVER_D_CLIENT_SECRET}")
 
-                Log.d("NaverAPI", "🔍 searchPlaces 요청 URL: $url")
+                Log.d("NaverAPI", "searchPlaces 요청 URL: $url")
 
                 val request = Request.Builder()
                     .url(url)
@@ -33,10 +33,10 @@ object NaverPlaceApi {
                 }
 
                 val jsonStr = response.body?.string()
-                Log.d("NaverAPI", "📦 searchPlaces 응답: $jsonStr")
+                Log.d("NaverAPI", "searchPlaces 응답: $jsonStr")
 
                 if (!response.isSuccessful || jsonStr == null) {
-                    Log.e("NaverAPI", "❗ searchPlaces 실패 코드: ${response.code}")
+                    Log.e("NaverAPI", "searchPlaces 실패 코드: ${response.code}")
                     continue
                 }
 
@@ -46,7 +46,7 @@ object NaverPlaceApi {
                     placeCount[title] = placeCount.getOrDefault(title, 0) + 1
                 }
             } catch (e: Exception) {
-                Log.e("NaverAPI", "❌ searchPlaces 예외 발생", e)
+                Log.e("NaverAPI", "searchPlaces 예외 발생", e)
                 continue
             }
         }
@@ -57,7 +57,7 @@ object NaverPlaceApi {
     suspend fun getHotPlaces(region: String): List<String> {
         val client = OkHttpClient()
         val url = "https://openapi.naver.com/v1/search/local.json?query=${region}&display=10&sort=comment"
-        Log.d("NaverAPI", "🔍 getHotPlaces 요청 URL: $url")
+        Log.d("NaverAPI", "getHotPlaces 요청 URL: $url")
 
         return try {
             val request = Request.Builder()
@@ -71,7 +71,7 @@ object NaverPlaceApi {
             }
 
             val jsonStr = response.body?.string()
-            Log.d("NaverAPI", "📦 getHotPlaces 응답: $jsonStr")
+            Log.d("NaverAPI", "getHotPlaces 응답: $jsonStr")
 
             if (!response.isSuccessful || jsonStr == null) {
                 Log.e("NaverAPI", "❗ getHotPlaces 실패 코드: ${response.code}")
@@ -87,7 +87,7 @@ object NaverPlaceApi {
             return result.take(2)
 
         } catch (e: Exception) {
-            Log.e("NaverAPI", "❌ getHotPlaces 예외 발생", e)
+            Log.e("NaverAPI", "getHotPlaces 예외 발생", e)
             return emptyList()
         }
     }
