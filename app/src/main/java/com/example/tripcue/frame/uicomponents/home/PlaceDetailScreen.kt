@@ -23,7 +23,6 @@ import com.naver.maps.map.CameraUpdate
 import com.naver.maps.map.MapView
 import com.naver.maps.map.overlay.Marker
 import androidx.compose.ui.viewinterop.AndroidView
-import fetchGooglePlacePhoto
 
 @Composable
 fun PlaceDetailScreen(place: PlaceInfo) {
