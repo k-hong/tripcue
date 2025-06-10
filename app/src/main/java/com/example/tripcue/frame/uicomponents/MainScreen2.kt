@@ -1,4 +1,3 @@
-// ✅ MainScreen2.kt (isEditMode 상태 추가)
 package com.example.tripcue.frame.uicomponents
 
 import androidx.compose.foundation.layout.Box
@@ -20,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,6 +49,7 @@ fun MainScreen2(navController: NavHostController) {
     val coroutineScope = rememberCoroutineScope()
 
     var isEditMode by remember { mutableStateOf(false) }
+    var refreshTrigger by remember { mutableStateOf(false) } // ✅ 새로고침 트리거 상태 추가
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -57,7 +58,10 @@ fun MainScreen2(navController: NavHostController) {
                 DrawerContent(
                     isEditMode = isEditMode,
                     onEditClick = { isEditMode = true },
-                    onDoneClick = { isEditMode = false }
+                    onDoneClick = {
+                        isEditMode = false
+                        refreshTrigger = true // ✅ 저장 시 새로고침 트리거
+                    }
                 )
             }
         }
@@ -110,10 +114,14 @@ fun MainScreen2(navController: NavHostController) {
         ) { contentPadding ->
             Box(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
                 when (currentRoute) {
-                    Routes.Home -> Home()
-                    //Routes.Schedules -> Schedules()
-                    //Routes.AddSchedule -> AddScheduleTest(navController)
+                    Routes.Home -> Home(navController, refreshTrigger = refreshTrigger)
                     else -> Text("페이지를 찾을 수 없습니다")
+                }
+                // ✅ 트리거 사용 후 초기화
+                if (refreshTrigger) {
+                    LaunchedEffect(Unit) {
+                        refreshTrigger = false
+                    }
                 }
             }
         }

@@ -140,10 +140,13 @@ fun ColumnScope.DrawerContent(
                     onClick = {
                         newSelectedTags = if (selected) {
                             newSelectedTags - tag
-                        } else {
+                        } else if (newSelectedTags.size < 4) {
                             newSelectedTags + tag
+                        } else {
+                            newSelectedTags // 무시
                         }
-                    },
+                    }
+                    ,
                     label = { Text(tag) },
                     modifier = Modifier.padding(4.dp)
                 )

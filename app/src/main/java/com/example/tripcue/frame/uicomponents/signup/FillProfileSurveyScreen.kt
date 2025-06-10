@@ -68,8 +68,15 @@ fun FillProfileSurveyScreen(navController: NavController) {
                 FilterChip(
                     selected = selected,
                     onClick = {
-                        selectedTags = if (selected) selectedTags - tag else selectedTags + tag
-                    },
+                        selectedTags = if (selected) {
+                            selectedTags - tag
+                        } else if (selectedTags.size < 4) {
+                            selectedTags + tag
+                        } else {
+                            selectedTags
+                        }
+                    }
+                    ,
                     label = { Text(tag) },
                     modifier = Modifier.padding(4.dp)
                 )

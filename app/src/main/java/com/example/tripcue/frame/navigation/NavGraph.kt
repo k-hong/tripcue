@@ -1,19 +1,26 @@
 package com.example.tripcue.frame.navigation
 
+import android.R.attr.type
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.uicomponents.EditProfileScreen
 import com.example.tripcue.frame.uicomponents.MainScreen2
 import com.example.tripcue.frame.uicomponents.Schedule.AddScheduleTest
 import com.example.tripcue.frame.uicomponents.Schedule.InfoCardScreen
 import com.example.tripcue.frame.uicomponents.Schedule.InventoryScheduleTest
+import com.example.tripcue.frame.uicomponents.home.PlaceDetailScreen
+import com.example.tripcue.frame.uicomponents.home.PlaceInfo
 import com.example.tripcue.frame.uicomponents.signup.FillProfileScreen
 import com.example.tripcue.frame.uicomponents.signup.FillProfileSurveyScreen
 import com.example.tripcue.frame.uicomponents.signup.LoginScreen
 import com.example.tripcue.frame.uicomponents.signup.SignUpScreen
+import com.example.tripcue.frame.viewmodel.PlaceDetailViewModel
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -54,6 +61,13 @@ fun NavGraph(navController: NavHostController) {
         }
         composable("edit_profile") {
             EditProfileScreen(navController)
+        }
+
+        composable(Routes.PlaceDetail.route) {
+            val viewModel = hiltViewModel<PlaceDetailViewModel>()
+            viewModel.selectedPlace?.let {
+                PlaceDetailScreen(place = it)
+            }
         }
     }
 }

@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.implementation
 import java.util.Properties
 
 plugins {
@@ -7,6 +8,11 @@ plugins {
     id("com.google.gms.google-services")
     alias(libs.plugins.secrets.gradle.plugin)
     alias(libs.plugins.kotlin.parcelize)
+    id ("kotlin-parcelize")
+    id ("dagger.hilt.android.plugin")
+    id("kotlin-kapt")
+
+
 
 }
 fun getApiKey(propertyName: String): String {
@@ -39,8 +45,11 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "NAVER_CLIENT_ID", "\"${getApiKey("NAVER_CLIENT_ID")}\"")
+        buildConfigField("String", "NAVER_CLIENT_SECRET", "\"${getApiKey("NAVER_CLIENT_SECRET")}\"")
         buildConfigField("String", "NAVER_D_CLIENT_ID", "\"${getApiKey("NAVER_D_CLIENT_ID")}\"")
         buildConfigField("String", "NAVER_D_CLIENT_SECRET", "\"${getApiKey("NAVER_D_CLIENT_SECRET")}\"")
+        buildConfigField("String", "GOOGLE_PLACES_API_KEY", "\"${getApiKey("GOOGLE_PLACES_API_KEY")}\"")
+
         manifestPlaceholders["NAVER_CLIENT_ID"] = getApiKey("NAVER_CLIENT_ID")
 
 
@@ -69,6 +78,7 @@ secrets {
     propertiesFileName = "secrets.properties"
     defaultPropertiesFileName = "local.defaults.properties"
 }
+
 
 dependencies {
 
@@ -125,5 +135,13 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation ("com.google.dagger:hilt-android:2.48")
+    kapt ("com.google.dagger:hilt-compiler:2.48")
+    // Coil (이미지 로딩)
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("com.google.android.libraries.places:places:3.3.0")
 
+
+    // Hilt for ViewModel
+    implementation ("androidx.hilt:hilt-navigation-compose:1.1.0")
 }

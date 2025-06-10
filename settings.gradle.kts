@@ -8,6 +8,7 @@ pluginManagement {
             }
         }
         mavenCentral()
+        maven("https://repository.map.naver.com/archive/maven")
         gradlePluginPortal()
     }
 }
@@ -17,7 +18,6 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven ("https://repository.map.naver.com/archive/maven")
-
     }
 }
 

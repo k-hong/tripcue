@@ -8,3 +8,8 @@ plugins {
     alias(libs.plugins.kotlin.parcelize) apply false
 
 }
+buildscript {
+    dependencies {
+        classpath("com.google.dagger:hilt-android-gradle-plugin:2.48")
+    }
+}

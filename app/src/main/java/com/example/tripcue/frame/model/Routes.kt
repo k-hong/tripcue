@@ -11,6 +11,7 @@ sealed class Routes (val route: String, val isRoot : Boolean = true) {
     object InventSchedule : Routes(route = "InventoryScheduleTest", isRoot = false)
     object InfoCard : Routes(route = "InfoCardScreen", isRoot = false)
     object FillProfileSurvey : Routes(route = "fill_profile_survey", isRoot = false)
+    object PlaceDetail : Routes("place_detail", isRoot = false)
 
 
     companion object{
