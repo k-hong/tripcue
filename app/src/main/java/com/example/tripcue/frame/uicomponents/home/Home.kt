@@ -1,15 +1,29 @@
-// ✅ Home.kt (with Google Places thumbnails)
 package com.example.tripcue.frame.uicomponents.home
 
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,6 +47,7 @@ fun Home(
     refreshTrigger: Boolean,
     viewModel: PlaceDetailViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val user = FirebaseAuth.getInstance().currentUser
     val db = FirebaseFirestore.getInstance()
     val scope = rememberCoroutineScope()
@@ -55,7 +70,12 @@ fun Home(
                 Log.d(TAG, "👤 Firestore 데이터: region=$region, interests=$interests")
 
                 if (interests.isNotEmpty()) {
-                    val results = NaverPlaceApi.advancedSearchPlaces(region, interests, totalLimit = 15)
+                    val results = GooglePlaceApi.advancedSearchPlaces(
+                        context = context,
+                        region = region,
+                        interests = interests,
+                        totalLimit = 15
+                    )
                     recommendedPlaces = results
                     Log.d(TAG, "✅ 추천 장소: $recommendedPlaces")
                 }
@@ -74,7 +94,9 @@ fun Home(
         }
     } else {
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(16.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
             item {
                 Text(text = "$nickname 님", fontSize = 22.sp)
@@ -138,6 +160,11 @@ fun PlaceCard(
                 text = "#${place.searchKeyword} " + place.category.replace(">", " #"),
                 fontSize = 12.sp,
                 color = Color.DarkGray
+            )
+            Text(
+                text = "⭐ ${place.rating} (${place.userRatingsTotal} reviews)",
+                fontSize = 12.sp,
+                color = Color.Gray
             )
         }
     }

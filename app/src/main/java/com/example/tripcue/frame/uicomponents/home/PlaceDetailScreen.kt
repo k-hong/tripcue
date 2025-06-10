@@ -3,7 +3,13 @@ package com.example.tripcue.frame.uicomponents.home
 import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,12 +23,12 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.rememberAsyncImagePainter
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.CameraUpdate
 import com.naver.maps.map.MapView
 import com.naver.maps.map.overlay.Marker
-import androidx.compose.ui.viewinterop.AndroidView
 
 @Composable
 fun PlaceDetailScreen(place: PlaceInfo) {
@@ -59,6 +65,13 @@ fun PlaceDetailScreen(place: PlaceInfo) {
         }
 
         Text(
+            text = "⭐ ${place.rating} (${place.userRatingsTotal} reviews)",
+            fontSize = 14.sp,
+            color = Color.Gray,
+            modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+        )
+
+        Text(
             text = place.description,
             fontSize = 14.sp,
             color = Color.DarkGray,
@@ -81,6 +94,7 @@ fun PlaceDetailScreen(place: PlaceInfo) {
         }
     }
 }
+
 @Composable
 fun NaverMapView(place: PlaceInfo, context: Context) {
     AndroidView(
@@ -89,7 +103,6 @@ fun NaverMapView(place: PlaceInfo, context: Context) {
             mapView.getMapAsync { naverMap ->
                 val coord = LatLng(place.latitude, place.longitude)
 
-                // 🔍 위치값 로그 출력
                 Log.d("PlaceDetail", "🗺 lat=${place.latitude}, lng=${place.longitude}")
                 Log.d("PlaceDetail", "🏷 title=${place.title}")
 

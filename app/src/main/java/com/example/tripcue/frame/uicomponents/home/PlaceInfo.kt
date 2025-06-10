@@ -11,5 +11,7 @@ data class PlaceInfo(
     val thumbnailUrl: String,
     val latitude: Double,
     val longitude: Double,
-    val searchKeyword: String
+    val searchKeyword: String,
+    val rating: Double = 0.0,
+    val userRatingsTotal: Int = 0
 ) : Parcelable
