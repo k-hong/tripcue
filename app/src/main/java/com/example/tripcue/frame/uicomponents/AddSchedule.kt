@@ -58,6 +58,11 @@ import java.time.Instant
 import java.time.ZoneId
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import com.example.tripcue.frame.model.Routes
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import java.util.UUID
 
 var location = ""
 var startDate: LocalDate = LocalDate.of(2000, 1, 1)
@@ -121,6 +126,7 @@ suspend fun fetchPlaceAutocomplete(input: String, apiKey: String): List<String> 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddSchedule(
+    navController: NavHostController,
     onDone: () -> Unit
 ) { //스케쥴 타이틀 추가 함수
     var showLocation by remember { mutableStateOf(true) }
@@ -219,7 +225,7 @@ fun AddSchedule(
                                 .padding(16.dp).align(Alignment.Center)
                             ){
                             Button(
-                                onClick = { showCard = false },
+                                onClick = { navController.navigate(Routes.Home.route) },
                                 modifier = Modifier.padding(8.dp)
                             ) {
                                 Text("닫기")
@@ -311,8 +317,13 @@ fun AddSchedule(
                             Button(
                                 onClick = {
                                     showCard = false
-                                    EnrollSchedule(title, location, startDate, endDate)
-                                    onDone()
+                                    EnrollSchedule(title, location, startDate, endDate) { success, id->
+                                        if (success) {
+                                            onDone()
+                                        } else {
+                                            // 에러 처리 로직 추가 가능 (토스트, 다이얼로그 등)
+                                        }
+                                    }
                                 },
                                 modifier = Modifier.padding(8.dp)
                             ) {
@@ -326,6 +337,37 @@ fun AddSchedule(
     }
 }
 
-fun EnrollSchedule(title : String, location : String, startDate : LocalDate, endDate : LocalDate){
-    schedules.add(ScheduleTitle(title, location,startDate, endDate))
+fun EnrollSchedule(
+    title : String,
+    location : String,
+    startDate : LocalDate,
+    endDate : LocalDate,
+    onComplete: (Boolean, String?) -> Unit = { _, _ -> }
+) {
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
+    if (userId == null) {
+        onComplete(false, null)
+        return
+    }
+
+    val db = FirebaseFirestore.getInstance()
+    val scheduleData = hashMapOf(
+        "title" to title,
+        "location" to location,
+        "startDate" to startDate.toString(),
+        "endDate" to endDate.toString()
+    )
+
+    db.collection("users")
+        .document(userId)
+        .collection("schedules")
+        .add(scheduleData)
+        .addOnSuccessListener { documentReference ->
+        val id = documentReference.id
+            onComplete(true, id)
+        }
+        .addOnFailureListener { e ->
+            e.printStackTrace()
+            onComplete(false, null)
+        }
 }

@@ -50,12 +50,17 @@ fun NavGraph(navController: NavHostController) {
 
         // 내부 기능 화면들
         composable(Routes.AddSchedule.route) {
-            AddSchedule(onDone = { navController.popBackStack() })
+            AddSchedule(navController, onDone = { navController.popBackStack() })
         }
 
-        composable(Routes.AddDetails.route) {
-            AddScheduleTest(navController)
+        composable(
+            route = Routes.AddDetails.route,
+            arguments = listOf(navArgument("cityDocId") { type = NavType.StringType })
+        ) {
+            val cityDocId = it.arguments?.getString("cityDocId") ?: return@composable
+            AddScheduleTest(navController, cityDocId)
         }
+
         composable(Routes.Schedules.route) {
             Schedules(navController)
         }

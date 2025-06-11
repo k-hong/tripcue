@@ -27,11 +27,15 @@ import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.model.ScheduleData
 import com.example.tripcue.frame.model.Transportation
 import com.example.tripcue.frame.model.WeatherInfo
+import com.example.tripcue.frame.uicomponents.location
 import com.example.tripcue.frame.viewmodel.ScheduleViewModel
 import java.time.LocalDate
 
 @Composable
-fun AddScheduleTest(navController: NavHostController) {
+fun AddScheduleTest(
+    navController: NavHostController,
+    cityDocId: String,   // 도시 문서 ID 추가
+) {
     val navBackStackEntry = remember(navController.currentBackStackEntry) {
         navController.getBackStackEntry(Routes.InventSchedule.route)
     }
@@ -51,7 +55,7 @@ fun AddScheduleTest(navController: NavHostController) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text("새 일정 추가", style = MaterialTheme.typography.titleLarge)
+        Text("새 일정 추가 - $location", style = MaterialTheme.typography.titleLarge)
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -117,6 +121,7 @@ fun AddScheduleTest(navController: NavHostController) {
 
         Button(
             onClick = {
+
                 val newSchedule = ScheduleData(
                     location = location,
                     date = date.toString(),
@@ -124,7 +129,7 @@ fun AddScheduleTest(navController: NavHostController) {
                     weather = null, // AddSchedule 단계에서는 날씨 정보 없음
                     details = details
                 )
-                scheduleViewModel.addSchedule(newSchedule)
+                scheduleViewModel.addSchedule(newSchedule, cityDocId)
                 navController.popBackStack() // 뒤로가기 (InventoryScheduleTest로)
             },
             modifier = Modifier.fillMaxWidth()

@@ -59,6 +59,12 @@ fun InventoryScheduleTest(navController: NavHostController) {
     val selectedScheduleAny = savedStateHandle?.get<Any>("selectedSchedule")
     val selectedSchedule = selectedScheduleAny as? ScheduleTitle
 
+    selectedSchedule?.let {
+        scheduleViewModel.loadScheduleDetails(it.id)
+    }
+
+    val scheduleDetails by scheduleViewModel.scheduleDetails.collectAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -79,7 +85,9 @@ fun InventoryScheduleTest(navController: NavHostController) {
         ) {
             Text("저장된 일정 목록", style = MaterialTheme.typography.titleMedium)
             Button(onClick = {
-                navController.navigate(Routes.AddDetails.route)
+                if (selectedSchedule != null) {
+                    navController.navigate(Routes.AddDetails.createRoute(selectedSchedule.id))
+                }
             }) {
                 Text("추가하기")
             }
@@ -88,10 +96,10 @@ fun InventoryScheduleTest(navController: NavHostController) {
         Spacer(modifier = Modifier.height(8.dp))
 
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
-            items(schedules) { schedule ->   // schedules 리스트에서 하나씩 schedule을 받음
-                ScheduleCard(schedule = schedule) {
+            items(scheduleDetails) { detail ->
+                ScheduleCard(schedule = detail) {
                     val backStackEntry = navController.getBackStackEntry(Routes.InventSchedule.route)
-                    backStackEntry.savedStateHandle["selectedSchedule"] = schedule
+                    backStackEntry.savedStateHandle["selectedSchedule"] = detail
                     navController.navigate(Routes.InfoCard.route)
                 }
                 Spacer(modifier = Modifier.height(8.dp))

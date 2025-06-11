@@ -33,6 +33,7 @@ data class ScheduleData(
 
 @Parcelize
 data class ScheduleTitle(
+    val id: String = "", // Firestore 문서 ID
     val title : String,
     val location: String,
     val startDate: LocalDate,
