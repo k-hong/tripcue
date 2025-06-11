@@ -97,6 +97,8 @@ dependencies {
     implementation(libs.firebase.database)
     implementation(libs.composeMaterial3)
     implementation(libs.composeWindowSizeClass)
+    implementation(libs.org.jetbrains.kotlin.kapt.gradle.plugin)
+    implementation(libs.androidx.material.icons.extended)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
