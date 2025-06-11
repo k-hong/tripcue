@@ -15,13 +15,11 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -190,18 +188,5 @@ fun ColumnScope.DrawerContent(
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    NavigationDrawerItem(
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text(text = "Drawer Item1") },
-        icon = { Icon(imageVector = Icons.Default.Home, contentDescription = "") },
-        onClick = {},
-        selected = false
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-    NavigationDrawerItem(
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text(text = "Drawer Item2") },
-        onClick = {},
-        selected = false
-    )
+
 }

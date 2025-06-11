@@ -1,4 +1,3 @@
-import org.gradle.kotlin.dsl.implementation
 import java.util.Properties
 
 plugins {
@@ -137,10 +136,12 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation ("com.google.dagger:hilt-android:2.48")
     kapt ("com.google.dagger:hilt-compiler:2.48")
+    implementation("com.google.mlkit:translate:17.0.2")
+
     // Coil (이미지 로딩)
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("com.google.android.libraries.places:places:3.3.0")
-
+    implementation("com.google.maps.android:maps-compose:4.3.3")
 
     // Hilt for ViewModel
     implementation ("androidx.hilt:hilt-navigation-compose:1.1.0")

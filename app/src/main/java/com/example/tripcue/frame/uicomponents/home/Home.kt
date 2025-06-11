@@ -1,6 +1,5 @@
 package com.example.tripcue.frame.uicomponents.home
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,90 +21,65 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.viewmodel.PlaceDetailViewModel
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @Composable
 fun Home(
     navController: NavController,
     refreshTrigger: Boolean,
-    viewModel: PlaceDetailViewModel = hiltViewModel()
+    placeDetailViewModel: PlaceDetailViewModel = hiltViewModel(),
+    homeViewModel: HomeViewModel = viewModel()
 ) {
-    val context = LocalContext.current
-    val user = FirebaseAuth.getInstance().currentUser
-    val db = FirebaseFirestore.getInstance()
-    val scope = rememberCoroutineScope()
-
-    val TAG = "TripcueLog"
-
-    var nickname by remember { mutableStateOf("") }
-    var region by remember { mutableStateOf("") }
-    var interests by remember { mutableStateOf(listOf<String>()) }
-    var recommendedPlaces by remember { mutableStateOf(listOf<PlaceInfo>()) }
-
-    fun fetchPlaces() {
-        scope.launch {
-            try {
-                val uid = user?.uid ?: return@launch
-                val doc = db.collection("users").document(uid).get().await()
-                nickname = doc.getString("nickname") ?: "사용자"
-                region = doc.getString("region") ?: "서울"
-                interests = doc.get("interests") as? List<String> ?: emptyList()
-                Log.d(TAG, "👤 Firestore 데이터: region=$region, interests=$interests")
-
-                if (interests.isNotEmpty()) {
-                    val results = GooglePlaceApi.advancedSearchPlaces(
-                        context = context,
-                        region = region,
-                        interests = interests,
-                        totalLimit = 15
-                    )
-                    recommendedPlaces = results
-                    Log.d(TAG, "✅ 추천 장소: $recommendedPlaces")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "❌ Firestore 사용자 정보 가져오기 실패", e)
-            }
-        }
+    LaunchedEffect(Unit, refreshTrigger) {
+        homeViewModel.fetchHomeData()
     }
 
-    LaunchedEffect(Unit) { fetchPlaces() }
-    LaunchedEffect(refreshTrigger) { if (refreshTrigger) fetchPlaces() }
-
-    if (recommendedPlaces.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("로딩 중 또는 관심 장소가 없습니다.")
-        }
-    } else {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            item {
-                Text(text = "$nickname 님", fontSize = 22.sp)
-                Text(text = "여행을 떠날 준비되셨나요?", fontSize = 18.sp)
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("🔥 추천 관심 장소", fontSize = 16.sp, modifier = Modifier.padding(top = 8.dp))
+    when (val state = homeViewModel.uiState) {
+        is HomeUiState.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("추천 장소를 불러오는 중입니다...")
             }
-            items(recommendedPlaces) {
-                PlaceCard(place = it, backgroundColor = Color(0xFFE0F7FA), navController, viewModel)
+        }
+        is HomeUiState.Error -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(state.message)
+            }
+        }
+        is HomeUiState.Success -> {
+            if (state.places.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("추천할만한 장소를 찾지 못했어요. 관심사를 변경해보는 건 어떠세요?")
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(16.dp)
+                ) {
+                    item {
+                        Text(text = "${state.nickname} 님", fontSize = 22.sp)
+                        Text(text = "여행을 떠날 준비되셨나요?", fontSize = 18.sp)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("🔥 추천 관심 장소", fontSize = 16.sp, modifier = Modifier.padding(top = 8.dp))
+                    }
+                    items(state.places) { place ->
+                        PlaceCard(place = place, backgroundColor = Color(0xFFE0F7FA), navController, placeDetailViewModel)
+                    }
+                }
             }
         }
     }
@@ -121,8 +95,12 @@ fun PlaceCard(
     val context = LocalContext.current
     var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
+    // [되돌리기] '깨끗한' 원본 제목으로 사진을 검색하는 이전 방식으로 변경
     LaunchedEffect(place.title) {
-        imageBitmap = fetchGooglePlacePhoto(place.title, context)
+        // 국내 장소이거나, 해외 장소 중 사진이 있다고 확인된 경우에만 사진 검색 실행
+        if (place.isDomestic || place.thumbnailUrl == "HAS_PHOTO") {
+            imageBitmap = fetchGooglePlacePhoto(place.title, context)
+        }
     }
 
     Row(
@@ -132,39 +110,47 @@ fun PlaceCard(
             .padding(vertical = 4.dp)
             .background(backgroundColor)
             .clickable {
-                viewModel.selectedPlace = place
-                navController.navigate(Routes.PlaceDetail.route)
+                val encodedTitle = URLEncoder.encode(place.title, StandardCharsets.UTF_8.name())
+                navController.navigate(
+                    Routes.PlaceDetail.createRoute(
+                        lat = place.latitude,
+                        lng = place.longitude,
+                        title = encodedTitle,
+                        isDomestic = place.isDomestic
+
+                    )
+                )
             }
             .padding(12.dp)
     ) {
-        if (imageBitmap != null) {
-            Image(
-                bitmap = imageBitmap!!,
-                contentDescription = "Google Place Image",
-                modifier = Modifier.size(80.dp)
-            )
+        val painter = if (imageBitmap != null) {
+            remember(imageBitmap) { androidx.compose.ui.graphics.painter.BitmapPainter(imageBitmap!!) }
         } else {
-            Image(
-                painter = rememberAsyncImagePainter(place.thumbnailUrl),
-                contentDescription = "Fallback thumbnail",
-                modifier = Modifier.size(80.dp)
-            )
+            rememberAsyncImagePainter("https://via.placeholder.com/150")
         }
+
+        Image(
+            painter = painter,
+            contentDescription = place.title,
+            modifier = Modifier.size(80.dp),
+            contentScale = ContentScale.Crop
+        )
 
         Spacer(modifier = Modifier.width(12.dp))
 
         Column {
-            Text(text = place.title, fontSize = 16.sp)
+            // [수정] 화면에 표시할 때는 원본 제목과 한국어 유형을 조합
+            val displayTitle = if (place.koreanType != null) {
+                "${place.title} (${place.koreanType})"
+            } else {
+                place.title
+            }
+            Text(text = displayTitle, fontSize = 16.sp, maxLines = 2)
             Text(text = place.description, fontSize = 12.sp, maxLines = 1)
             Text(
                 text = "#${place.searchKeyword} " + place.category.replace(">", " #"),
                 fontSize = 12.sp,
                 color = Color.DarkGray
-            )
-            Text(
-                text = "⭐ ${place.rating} (${place.userRatingsTotal} reviews)",
-                fontSize = 12.sp,
-                color = Color.Gray
             )
         }
     }
