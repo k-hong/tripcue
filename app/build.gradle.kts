@@ -7,7 +7,7 @@ plugins {
     id("com.google.gms.google-services")
     alias(libs.plugins.secrets.gradle.plugin)
     alias(libs.plugins.kotlin.parcelize)
-    id ("kotlin-parcelize")
+//    id ("kotlin-parcelize")
     id ("dagger.hilt.android.plugin")
     id("kotlin-kapt")
 
@@ -96,6 +96,8 @@ dependencies {
     implementation(libs.firebase.database)
     implementation(libs.composeMaterial3)
     implementation(libs.composeWindowSizeClass)
+//    implementation(libs.org.jetbrains.kotlin.kapt.gradle.plugin)
+    implementation(libs.androidx.material.icons.extended)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

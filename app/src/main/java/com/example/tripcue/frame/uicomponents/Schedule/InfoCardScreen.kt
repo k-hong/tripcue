@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
@@ -28,6 +29,8 @@ import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 
 // 테스트용
 fun convertLocationToGrid(location: String): Pair<Int, Int> {
@@ -43,6 +46,7 @@ fun convertLocationToGrid(location: String): Pair<Int, Int> {
 fun InfoCardScreen(
     navController: NavController,
 ) {
+    val context = LocalContext.current
     val weatherViewModel: WeatherViewModel = viewModel()
     val scheduleViewModel: ScheduleViewModel = viewModel()
     // val selectedSchedule by scheduleViewModel.selectedSchedule.collectAsState()
@@ -92,6 +96,19 @@ fun InfoCardScreen(
         navController.popBackStack()
     }
 
+    fun onExport() {
+        val info = """
+            📍 위치: $location
+            📅 날짜: $date
+            🚗 이동 수단: ${transportation.displayName}
+            🌤️ 날씨 상태: ${weatherInfo?.status ?: "알 수 없음"}
+            🌡️ 기온: ${weatherInfo?.temperature ?: "알 수 없음"} ℃
+            📝 상세 정보: $details
+        """.trimIndent()
+
+        exportPdfAndShare(context, "Trip_Info_${date}.pdf", info)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth(0.9f)
@@ -102,7 +119,7 @@ fun InfoCardScreen(
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 TextButton(
                     onClick = {
@@ -116,6 +133,16 @@ fun InfoCardScreen(
                 ) {
                     Text(text = if (isEditing) "수정 완료" else "수정", fontSize = 14.sp)
                 }
+
+                TextButton(
+                    onClick = { onExport() },
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = Color.LightGray,
+                        contentColor = Color.Black
+                    )
+                ) {
+                    Text("내보내기", fontSize = 14.sp)
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -124,6 +151,7 @@ fun InfoCardScreen(
                 value = location,
                 onValueChange = { if (isEditing) location = it },
                 label = { Text("위치", fontSize = 12.sp, color = Color.Gray) },
+                leadingIcon = { Icon(Icons.Default.Place, contentDescription = "위치 아이콘") },
                 enabled = isEditing,
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
@@ -133,6 +161,7 @@ fun InfoCardScreen(
                 value = date.toString(),
                 onValueChange = {},
                 label = { Text("날짜", fontSize = 12.sp, color = Color.Gray) },
+                leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = "날짜 아이콘") },
                 enabled = false,
                 readOnly = true,
                 modifier = Modifier
@@ -165,6 +194,7 @@ fun InfoCardScreen(
                 value = weatherInfo?.status ?: "",
                 onValueChange = {},
                 label = { Text("날씨 상태") },
+                leadingIcon = { Icon(Icons.Default.WbSunny, contentDescription = "날씨 상태 아이콘") },
                 enabled = false,
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = TextStyle(
@@ -178,6 +208,7 @@ fun InfoCardScreen(
                 value = weatherInfo?.temperature?.toString() ?: "",
                 onValueChange = {},
                 label = { Text("기온 (℃)") },
+                leadingIcon = { Icon(Icons.Default.Thermostat, contentDescription = "기온 아이콘") },
                 enabled = false,
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = TextStyle(
@@ -191,6 +222,7 @@ fun InfoCardScreen(
                 value = details,
                 onValueChange = { if (isEditing) details = it },
                 label = { Text("상세 정보", fontSize = 12.sp, color = Color.Gray) },
+                leadingIcon = { Icon(Icons.Default.Description, contentDescription = "상세 정보 아이콘") },
                 enabled = isEditing,
                 modifier = Modifier
                     .fillMaxWidth()

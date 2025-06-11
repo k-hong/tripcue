@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,15 +23,24 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.model.ScheduleData
 import com.example.tripcue.frame.model.Transportation
 import com.example.tripcue.frame.model.WeatherInfo
+import com.example.tripcue.frame.uicomponents.location
 import com.example.tripcue.frame.viewmodel.ScheduleViewModel
 import java.time.LocalDate
 
 @Composable
-fun AddScheduleTest(navController: NavHostController) {
-    val scheduleViewModel: ScheduleViewModel = viewModel()
+fun AddScheduleTest(
+    navController: NavHostController,
+    cityDocId: String,   // 도시 문서 ID 추가
+) {
+    val navBackStackEntry = remember(navController.currentBackStackEntry) {
+        navController.getBackStackEntry(Routes.InventSchedule.route)
+    }
+    val scheduleViewModel: ScheduleViewModel = viewModel(navBackStackEntry)
+    val errorMessage by scheduleViewModel.errorMessage.collectAsState()
 
     var location by remember { mutableStateOf("") }
     var date by remember { mutableStateOf(LocalDate.now()) }
@@ -45,7 +55,7 @@ fun AddScheduleTest(navController: NavHostController) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text("새 일정 추가", style = MaterialTheme.typography.titleLarge)
+        Text("새 일정 추가 - $location", style = MaterialTheme.typography.titleLarge)
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -101,8 +111,17 @@ fun AddScheduleTest(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage!!,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
+
         Button(
             onClick = {
+
                 val newSchedule = ScheduleData(
                     location = location,
                     date = date.toString(),
@@ -110,7 +129,7 @@ fun AddScheduleTest(navController: NavHostController) {
                     weather = null, // AddSchedule 단계에서는 날씨 정보 없음
                     details = details
                 )
-                scheduleViewModel.addSchedule(newSchedule)
+                scheduleViewModel.addSchedule(newSchedule, cityDocId)
                 navController.popBackStack() // 뒤로가기 (InventoryScheduleTest로)
             },
             modifier = Modifier.fillMaxWidth()
