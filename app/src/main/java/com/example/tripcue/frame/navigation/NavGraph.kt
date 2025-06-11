@@ -9,11 +9,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.tripcue.frame.model.Routes
+import com.example.tripcue.frame.uicomponents.AddSchedule
 import com.example.tripcue.frame.uicomponents.EditProfileScreen
 import com.example.tripcue.frame.uicomponents.MainScreen2
 import com.example.tripcue.frame.uicomponents.Schedule.AddScheduleTest
 import com.example.tripcue.frame.uicomponents.Schedule.InfoCardScreen
 import com.example.tripcue.frame.uicomponents.Schedule.InventoryScheduleTest
+import com.example.tripcue.frame.uicomponents.Schedules
 import com.example.tripcue.frame.uicomponents.home.PlaceDetailScreen
 import com.example.tripcue.frame.uicomponents.home.PlaceInfo
 import com.example.tripcue.frame.uicomponents.signup.FillProfileScreen
@@ -48,10 +50,14 @@ fun NavGraph(navController: NavHostController) {
 
         // 내부 기능 화면들
         composable(Routes.AddSchedule.route) {
+            AddSchedule(onDone = { navController.popBackStack() })
+        }
+
+        composable(Routes.AddDetails.route) {
             AddScheduleTest(navController)
         }
         composable(Routes.Schedules.route) {
-        //    Schedules()
+            Schedules(navController)
         }
         composable(Routes.InventSchedule.route) {
             InventoryScheduleTest(navController)

@@ -17,11 +17,11 @@ import kotlinx.coroutines.tasks.await
 class ScheduleViewModel(private val repository: ScheduleRepository = ScheduleRepository()
 ) : ViewModel() {
 
-    private val firestore = FirebaseFirestore.getInstance()
+//    private val firestore = FirebaseFirestore.getInstance()
     private val uid = FirebaseAuth.getInstance().currentUser?.uid
-    private val scheduleCollection = uid?.let {
-        firestore.collection("users").document(it).collection("schedules")
-    } ?: firestore.collection("anonymous")
+//    private val scheduleCollection = uid?.let {
+//        firestore.collection("users").document(it).collection("schedules")
+//    } ?: firestore.collection("anonymous")
 
     private val _schedules = MutableStateFlow<List<ScheduleData>>(emptyList())
     val schedules: StateFlow<List<ScheduleData>> = _schedules
@@ -32,9 +32,20 @@ class ScheduleViewModel(private val repository: ScheduleRepository = ScheduleRep
     val errorMessage: StateFlow<String?> = _errorMessage
 
     init {
+        if (uid == null) {
+            // 로그인 안 된 상태면 에러 메시지 세팅
+            _errorMessage.value = "로그인이 필요합니다."
+        }
+
         viewModelScope.launch {
-            repository.getSchedules().collect { list ->
-                _schedules.value = list
+            try {
+                repository.getSchedules().collect { list ->
+                    _schedules.value = list
+                }
+                _errorMessage.value = null
+            } catch (e: Exception) {
+                Log.e("ScheduleViewModel", "init error", e)
+                _errorMessage.value = "스케줄 불러오기 중 오류가 발생했습니다: ${e.message}"
             }
         }
     }
@@ -45,6 +56,10 @@ class ScheduleViewModel(private val repository: ScheduleRepository = ScheduleRep
 
     // 스케줄 전체 불러오기
     fun loadSchedules() {
+        if (uid == null) {
+            _errorMessage.value = "로그인이 필요합니다."
+            return
+        }
         viewModelScope.launch {
             try {
                 val list = repository.getSchedules().first()  // getSchedules는 Flow라서, 적절히 변환 필요
@@ -59,6 +74,10 @@ class ScheduleViewModel(private val repository: ScheduleRepository = ScheduleRep
 
     // 새로운 스케줄 추가
     fun addSchedule(schedule: ScheduleData) {
+        if (uid == null) {
+            _errorMessage.value = "로그인이 필요합니다."
+            return
+        }
         viewModelScope.launch {
             try {
                 repository.addSchedule(schedule) // Firebase 저장
@@ -95,6 +114,10 @@ class ScheduleViewModel(private val repository: ScheduleRepository = ScheduleRep
 //            .addOnFailureListener {
 //                // 조회 실패 처리
 //            }
+        if (uid == null) {
+            _errorMessage.value = "로그인이 필요합니다."
+            return
+        }
         viewModelScope.launch {
             try {
                 repository.updateSchedule(updatedSchedule)

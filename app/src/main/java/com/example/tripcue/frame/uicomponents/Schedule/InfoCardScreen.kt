@@ -119,17 +119,8 @@ fun InfoCardScreen(
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                TextButton(
-                    onClick = { onExport() },
-                    colors = ButtonDefaults.textButtonColors(
-                        containerColor = Color.LightGray,
-                        contentColor = Color.Black
-                    )
-                ) {
-                    Text("내보내기", fontSize = 14.sp)
-                }
                 TextButton(
                     onClick = {
                         if (isEditing) onSave()
@@ -141,6 +132,16 @@ fun InfoCardScreen(
                     )
                 ) {
                     Text(text = if (isEditing) "수정 완료" else "수정", fontSize = 14.sp)
+                }
+
+                TextButton(
+                    onClick = { onExport() },
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = Color.LightGray,
+                        contentColor = Color.Black
+                    )
+                ) {
+                    Text("내보내기", fontSize = 14.sp)
                 }
             }
 

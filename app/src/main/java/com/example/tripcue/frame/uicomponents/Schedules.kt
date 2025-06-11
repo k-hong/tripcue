@@ -1,6 +1,7 @@
 package com.example.tripcue.frame.uicomponents
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,9 +27,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 
 @Composable
-fun Schedules() { //스케쥴 타이틀 카드 나열
+fun Schedules(navController: NavHostController) { //스케쥴 타이틀 카드 나열
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -36,7 +38,12 @@ fun Schedules() { //스케쥴 타이틀 카드 나열
     ) {
         items(schedules, key = { it.hashCode() }) { schedule ->
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth().clickable {
+                        // 클릭 시 selectedSchedule 키에 현재 스케줄을 저장하고 화면 이동
+                        navController.currentBackStackEntry?.savedStateHandle?.set("selectedSchedule", schedule)
+                        navController.navigate("InventoryScheduleTest")  // route 이름을 맞춰주세요
+                    },
                 elevation = CardDefaults.cardElevation(4.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {

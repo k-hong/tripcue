@@ -57,6 +57,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import java.time.Instant
 import java.time.ZoneId
 import androidx.compose.ui.text.style.TextAlign
+import androidx.navigation.NavController
 
 var location = ""
 var startDate: LocalDate = LocalDate.of(2000, 1, 1)
@@ -119,7 +120,9 @@ suspend fun fetchPlaceAutocomplete(input: String, apiKey: String): List<String> 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddSchedule(  onDone: () -> Unit) { //스케쥴 타이틀 추가 함수
+fun AddSchedule(
+    onDone: () -> Unit
+) { //스케쥴 타이틀 추가 함수
     var showLocation by remember { mutableStateOf(true) }
     var showCard by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,26 +36,50 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavHostController
 import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.model.ScheduleData
+import com.example.tripcue.frame.model.ScheduleTitle
+import com.example.tripcue.frame.model.factory.Schedules.schedules
 import com.google.gson.Gson
 import java.net.URLEncoder
 
 @Composable
 fun InventoryScheduleTest(navController: NavHostController) {
-    val scheduleViewModel: ScheduleViewModel = viewModel()
+//    val savedStateHandle = navController.previousBackStackEntry?.savedStateHandle
+//    val selectedSchedule = savedStateHandle?.get<ScheduleTitle>("selectedSchedule")
+//
+//    // ScheduleTitle 안에 담긴 세부 일정 리스트 (ScheduleData 리스트)
+//    val schedules = selectedSchedule?.ScheduleData ?: emptyList()
+
+    val navBackStackEntry = remember(navController.currentBackStackEntry) {
+        navController.getBackStackEntry(Routes.Schedules.route)
+    }
+    val scheduleViewModel: ScheduleViewModel = viewModel(navBackStackEntry)
+
     val schedules by scheduleViewModel.schedules.collectAsState()
+    val savedStateHandle = navBackStackEntry.savedStateHandle
+    val selectedScheduleAny = savedStateHandle?.get<Any>("selectedSchedule")
+    val selectedSchedule = selectedScheduleAny as? ScheduleTitle
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        if (selectedSchedule != null) {
+            Text("선택된 스케줄 정보", style = MaterialTheme.typography.titleLarge)
+            Text("제목: ${selectedSchedule.title}")
+            Text("장소: ${selectedSchedule.location}")
+            Text("시작일: ${selectedSchedule.startDate}")
+            Text("종료일: ${selectedSchedule.endDate}")
+        } else {
+            Text("선택된 스케줄이 없습니다.")
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text("저장된 일정 목록", style = MaterialTheme.typography.titleMedium)
             Button(onClick = {
-                navController.navigate(Routes.AddSchedule.route)
+                navController.navigate(Routes.AddDetails.route)
             }) {
                 Text("추가하기")
             }
@@ -63,12 +88,11 @@ fun InventoryScheduleTest(navController: NavHostController) {
         Spacer(modifier = Modifier.height(8.dp))
 
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
-            items(schedules.size) { index ->
-                val schedule = schedules[index]
+            items(schedules) { schedule ->   // schedules 리스트에서 하나씩 schedule을 받음
                 ScheduleCard(schedule = schedule) {
-                    navController.currentBackStackEntry?.savedStateHandle?.set("selectedSchedule", schedule)
-                    // scheduleViewModel.selectSchedule(schedule) // ViewModel에 선택 저장
-                    navController.navigate(Routes.InfoCard.route) // JSON 제거
+                    val backStackEntry = navController.getBackStackEntry(Routes.InventSchedule.route)
+                    backStackEntry.savedStateHandle["selectedSchedule"] = schedule
+                    navController.navigate(Routes.InfoCard.route)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             }

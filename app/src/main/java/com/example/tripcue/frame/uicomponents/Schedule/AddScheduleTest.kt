@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.model.ScheduleData
 import com.example.tripcue.frame.model.Transportation
 import com.example.tripcue.frame.model.WeatherInfo
@@ -31,7 +32,10 @@ import java.time.LocalDate
 
 @Composable
 fun AddScheduleTest(navController: NavHostController) {
-    val scheduleViewModel: ScheduleViewModel = viewModel()
+    val navBackStackEntry = remember(navController.currentBackStackEntry) {
+        navController.getBackStackEntry(Routes.InventSchedule.route)
+    }
+    val scheduleViewModel: ScheduleViewModel = viewModel(navBackStackEntry)
     val errorMessage by scheduleViewModel.errorMessage.collectAsState()
 
     var location by remember { mutableStateOf("") }
