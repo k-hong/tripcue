@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +32,7 @@ import java.time.LocalDate
 @Composable
 fun AddScheduleTest(navController: NavHostController) {
     val scheduleViewModel: ScheduleViewModel = viewModel()
+    val errorMessage by scheduleViewModel.errorMessage.collectAsState()
 
     var location by remember { mutableStateOf("") }
     var date by remember { mutableStateOf(LocalDate.now()) }
@@ -100,6 +102,14 @@ fun AddScheduleTest(navController: NavHostController) {
         )
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage!!,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
 
         Button(
             onClick = {
