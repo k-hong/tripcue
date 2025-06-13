@@ -23,12 +23,14 @@ data class WeatherInfo(
 
 @Parcelize
 data class ScheduleData(
-    val id: String = "",
+    var id: String = "",
     var location: String = "",
     var date: String = "",
     var transportation: Transportation = Transportation.WALK,
     var weather: @RawValue WeatherInfo? = null,
-    var details: String = ""
+    var details: String = "",
+    val latitude: Double? = null,
+    val longitude: Double? = null
 ): Parcelable
 
 @Parcelize
@@ -40,3 +42,5 @@ data class ScheduleTitle(
     val endDate: LocalDate,
     var ScheduleData : MutableList<ScheduleData> = mutableListOf() // 카드 클릭시 세부 일정표로 이동
 ) : Parcelable
+
+data class PlaceResult( val placeId: String, val name: String, val lat: Double, val lng: Double)

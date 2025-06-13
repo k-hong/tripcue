@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -42,7 +43,7 @@ import com.google.gson.Gson
 import java.net.URLEncoder
 
 @Composable
-fun InventoryScheduleTest(navController: NavHostController) {
+fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
 //    val savedStateHandle = navController.previousBackStackEntry?.savedStateHandle
 //    val selectedSchedule = savedStateHandle?.get<ScheduleTitle>("selectedSchedule")
 //
@@ -59,8 +60,10 @@ fun InventoryScheduleTest(navController: NavHostController) {
     val selectedScheduleAny = savedStateHandle?.get<Any>("selectedSchedule")
     val selectedSchedule = selectedScheduleAny as? ScheduleTitle
 
-    selectedSchedule?.let {
-        scheduleViewModel.loadScheduleDetails(it.id)
+    LaunchedEffect(selectedSchedule?.id) {
+        selectedSchedule?.let {
+            scheduleViewModel.loadScheduleDetails(it.id)
+        }
     }
 
     val scheduleDetails by scheduleViewModel.scheduleDetails.collectAsState()
@@ -100,7 +103,7 @@ fun InventoryScheduleTest(navController: NavHostController) {
                 ScheduleCard(schedule = detail) {
                     val backStackEntry = navController.getBackStackEntry(Routes.InventSchedule.route)
                     backStackEntry.savedStateHandle["selectedSchedule"] = detail
-                    navController.navigate(Routes.InfoCard.route)
+                    navController.navigate("${Routes.InfoCard.route.replace("{cityDocId}", cityDocId)}")
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             }

@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.model.ScheduleTitle
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -114,7 +115,7 @@ fun Schedules(navController: NavHostController) { //스케쥴 타이틀 카드 �
                                 "selectedSchedule",
                                 schedule
                             )
-                            navController.navigate("InventoryScheduleTest")  // route 이름을 맞춰주세요
+                            navController.navigate("${Routes.InventSchedule.route.replace("{cityDocId}", schedule.id)}")  // route 이름을 맞춰주세요
                         },
                     elevation = CardDefaults.cardElevation(4.dp)
                 ) {

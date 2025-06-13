@@ -6,14 +6,18 @@ import androidx.lifecycle.viewModelScope
 import com.example.tripcue.frame.model.ScheduleData
 import com.example.tripcue.frame.model.Transportation
 import com.example.tripcue.frame.uicomponents.Schedule.ScheduleRepository
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.util.UUID
+import kotlin.coroutines.cancellation.CancellationException
 
 class ScheduleViewModel(private val repository: ScheduleRepository = ScheduleRepository()
 ) : ViewModel() {
@@ -73,7 +77,9 @@ class ScheduleViewModel(private val repository: ScheduleRepository = ScheduleRep
                     .await()
 
                 val tasks = tasksSnapshot.documents.map { doc ->
-                    doc.toObject(ScheduleData::class.java)!!
+                    val data = doc.toObject(ScheduleData::class.java)!!
+                    data.id = doc.id   // 문서의 ID를 ScheduleData.id에 할당
+                    data
                 }
                 _scheduleDetails.value = tasks
             } catch (e: Exception) {
@@ -85,24 +91,26 @@ class ScheduleViewModel(private val repository: ScheduleRepository = ScheduleRep
 
     // 새로운 스케줄 추가
     fun addSchedule(schedule: ScheduleData, cityDocId: String) {
-        val uid = getCurrentUserUid()
         if (uid == null) {
             _errorMessage.value = "로그인이 필요합니다."
             return
         }
         viewModelScope.launch {
             try {
-                // Firestore에 저장
                 val docRef = firestore.collection("users")
                     .document(uid)
                     .collection("schedules")
-                    .document(cityDocId)  // 도시 문서 ID 명시
-                    .collection("tasks")  // 하위 컬렉션으로 할일 저장
-                    .document()           // 자동 생성 ID
+                    .document(cityDocId)
+                    .collection("tasks")
+                    .document(schedule.id)  // 자동 생성 ID
 
+                // 새 ID를 schedule에 반영
+                // schedule.id = docRef.id
+
+                // Firestore에 저장
                 docRef.set(schedule).await()
 
-                // 로컬 상태에도 추가 (필요하면 도시별로 분류하는 작업 추가 가능)
+                // 로컬 상태에도 추가
                 _schedules.value = _schedules.value + schedule
                 _errorMessage.value = null
             } catch (e: Exception) {
@@ -112,46 +120,64 @@ class ScheduleViewModel(private val repository: ScheduleRepository = ScheduleRep
         }
     }
 
-    // 스케줄 수정 (location + date 조합으로 문서 찾기)
-    fun updateSchedule(updatedSchedule: ScheduleData) {
-//        scheduleCollection
-//            .whereEqualTo("location", updatedSchedule.location)
-//            .whereEqualTo("date", updatedSchedule.date)
-//            .get()
-//            .addOnSuccessListener { querySnapshot ->
-//                if (!querySnapshot.isEmpty) {
-//                    val docId = querySnapshot.documents.first().id
-//                    scheduleCollection.document(docId)
-//                        .set(updatedSchedule)
-//                        .addOnSuccessListener {
-//                            loadSchedules()
-//                        }
-//                        .addOnFailureListener {
-//                            // 수정 실패 처리
-//                        }
-//                } else {
-//                    addSchedule(updatedSchedule)
-//                }
-//            }
-//            .addOnFailureListener {
-//                // 조회 실패 처리
-//            }
+    fun updateSchedule(schedule: ScheduleData, cityDocId: String, onComplete: (Boolean) -> Unit) {
+        Log.d("UpdateSchedule", "updateSchedule 호출됨 cityDocId=$cityDocId, scheduleId=${schedule.id}")
+        val uid = getCurrentUserUid()
         if (uid == null) {
             _errorMessage.value = "로그인이 필요합니다."
+            onComplete(false)
             return
         }
+        if (schedule.id.isEmpty()) {
+            _errorMessage.value = "수정할 스케줄 ID가 없습니다."
+            onComplete(false)
+            return
+        }
+
         viewModelScope.launch {
             try {
-                repository.updateSchedule(updatedSchedule)
+                Log.d(
+                    "Coroutine",
+                    "업데이트 시도: uid=$uid, cityDocId=$cityDocId, scheduleId=${schedule.id}"
+                )
+                val docRef = firestore.collection("users")
+                    .document(uid)
+                    .collection("schedules")
+                    .document(cityDocId)
+                    .collection("tasks")
+                    .document(schedule.id)
+
+                val dataMap = mapOf(
+                    "id" to schedule.id,
+                    "location" to schedule.location,
+                    "date" to schedule.date,
+                    "transportation" to schedule.transportation.name, // enum -> String 변환
+                    "details" to schedule.details,
+                    "latitude" to schedule.latitude,
+                    "longitude" to schedule.longitude
+                )
+                docRef.set(dataMap).await()
+                Log.d("Coroutine", "스케줄 업데이트 성공")
+
+                _schedules.value = _schedules.value.map {
+                    if (it.id == schedule.id) schedule else it
+                }
                 _errorMessage.value = null
+                onComplete(true)
+            } catch (e: CancellationException) {
+                // 코루틴 취소 시 예외는 무시하거나 로깅만 한다
+                Log.d("Coroutine", "작업 취소됨: ${e.message}")
+                onComplete(false) // 필요하다면 콜백 호출
             } catch (e: Exception) {
-                Log.e("ScheduleViewModel", "updateSchedule error", e)
-                _errorMessage.value = "스케줄 수정 중 오류가 발생했습니다: ${e.message}"
+                Log.e("Coroutine", "에러 발생", e)
+                _errorMessage.value = e.message
+                onComplete(false)
             }
         }
     }
 
-    fun getCurrentUserUid(): String? {
+
+        fun getCurrentUserUid(): String? {
         return FirebaseAuth.getInstance().currentUser?.uid
     }
 }

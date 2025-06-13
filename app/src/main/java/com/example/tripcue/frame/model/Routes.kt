@@ -10,8 +10,8 @@ sealed class Routes (val route: String, val isRoot : Boolean = true) {
     object AddDetails : Routes(route = "AddScheduleTest/{cityDocId}", isRoot = false) {
         fun createRoute(cityDocId: String): String = "AddScheduleTest/$cityDocId"
     }
-    object InventSchedule : Routes(route = "InventoryScheduleTest", isRoot = false)
-    object InfoCard : Routes(route = "InfoCardScreen", isRoot = false)
+    object InventSchedule : Routes(route = "InventoryScheduleTest/{cityDocId}", isRoot = false)
+    object InfoCard : Routes(route = "InfoCardScreen/{cityDocId}", isRoot = false)
     object FillProfileSurvey : Routes(route = "fill_profile_survey", isRoot = false)
     object PlaceDetail : Routes("map_screen/{lat}/{lng}/{title}/{isDomestic}", isRoot = false) {
         fun createRoute(lat: Double, lng: Double, title: String, isDomestic: Boolean) =
