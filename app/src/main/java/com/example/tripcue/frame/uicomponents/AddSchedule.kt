@@ -202,7 +202,7 @@ fun AddSchedule(
                                 .fillMaxWidth()
                                 .padding(top = 80.dp, bottom = 80.dp)
                         ) {
-                            items(searchResults.take(5).withIndex().toList()) { (index,result) ->
+                            items(searchResults.take(4).withIndex().toList()) { (index,result) ->
                                 val isThisSelected = (index == selectedIndex)
                                 Text(
                                     text = result,
@@ -225,7 +225,7 @@ fun AddSchedule(
                                 .padding(16.dp).align(Alignment.Center)
                             ){
                             Button(
-                                onClick = { navController.navigate(Routes.Home.route) },
+                                onClick = { onDone() },
                                 modifier = Modifier.padding(8.dp)
                             ) {
                                 Text("닫기")

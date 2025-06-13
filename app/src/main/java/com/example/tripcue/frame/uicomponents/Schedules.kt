@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,12 +26,14 @@ import androidx.compose.ui.unit.dp
 import com.example.tripcue.frame.model.factory.Schedules.schedules
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.tripcue.frame.model.Routes
@@ -121,13 +124,17 @@ fun Schedules(navController: NavHostController) { //스케쥴 타이틀 카드 �
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            "제목: ${schedule.title}",
+                            schedule.title,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            fontSize = 20.sp
+                        )
+                        Divider(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(
-                                    color = Color.LightGray
-                                ),
-                            fontSize = 18.sp
+                                .height(2.dp),
+                            color = Color.White
                         )
                         Text("장소: ${schedule.location}")
                         Text("시작일: ${schedule.startDate}")

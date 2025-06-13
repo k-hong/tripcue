@@ -28,16 +28,28 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.navigation.BottomNavigationBar
 import com.example.tripcue.frame.uicomponents.home.Home
 import kotlinx.coroutines.launch
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.tripcue.frame.uicomponents.Schedule.AddScheduleTest
+import com.example.tripcue.frame.uicomponents.Schedule.InfoCardScreen
+import com.example.tripcue.frame.uicomponents.Schedule.InventoryScheduleTest
+import com.example.tripcue.frame.uicomponents.home.MapScreen
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen2(navController: NavHostController) {
-    val backStackEntry by navController.currentBackStackEntryAsState()
+    val navControllerForMain = rememberNavController()
+    val backStackEntry by navControllerForMain.currentBackStackEntryAsState()
     val currentRoute by remember(backStackEntry) {
         derivedStateOf {
             backStackEntry?.destination?.route?.let {
@@ -89,7 +101,7 @@ fun MainScreen2(navController: NavHostController) {
                         title = { },
                         navigationIcon = {
                             IconButton(onClick = {
-                                navController.popBackStack()
+                                navControllerForMain.popBackStack()
                             }) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Default.ArrowBack,
@@ -101,29 +113,72 @@ fun MainScreen2(navController: NavHostController) {
             },
             bottomBar = {
                 if (currentRoute.isRoot)
-                    BottomNavigationBar(navController)
-            },
-            floatingActionButton = {
-                if (currentRoute == Routes.Schedules)
-                    FloatingActionButton(onClick = {
-                        navController.navigate(Routes.AddSchedule.route)
-                    }) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                    }
+                    BottomNavigationBar(navControllerForMain)
             }
-        ) { contentPadding ->
-            Box(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
-                when (currentRoute) {
-                    Routes.Home -> Home(navController, refreshTrigger = refreshTrigger)
-                    else -> Text("페이지를 찾을 수 없습니다")
-                }
-                // ✅ 트리거 사용 후 초기화
-                if (refreshTrigger) {
-                    LaunchedEffect(Unit) {
-                        refreshTrigger = false
+        )
+        { innerPadding ->
+                NavHost(
+                    navController = navControllerForMain,
+                    startDestination =  Routes.Home.route,
+                    modifier = Modifier.padding(innerPadding)
+                ) {
+                    composable(Routes.Home.route) {
+                        Home(navController, refreshTrigger = refreshTrigger)
                     }
+                    // 내부 기능 화면들
+                    composable(Routes.AddSchedule.route) {
+                        AddSchedule(navControllerForMain, onDone = { navController.popBackStack()
+                            navControllerForMain.navigate(Routes.Home.route)
+                            })
+                    }
+
+                    composable(
+                        route = Routes.AddDetails.route,
+                        arguments = listOf(navArgument("cityDocId") { type = NavType.StringType })
+                    ) {
+                        val cityDocId = it.arguments?.getString("cityDocId") ?: return@composable
+                        AddScheduleTest(navController, cityDocId)
+                    }
+
+                    composable(Routes.Schedules.route) {
+                        Schedules(navControllerForMain)
+                    }
+
+                    composable(
+                        route = "${Routes.InfoCard.route}",
+                        arguments = listOf(navArgument("cityDocId") { type = NavType.StringType })
+                    ) {
+                        val cityDocId = it.arguments?.getString("cityDocId") ?: return@composable
+                        InfoCardScreen(navControllerForMain, cityDocId)
+                    }
+
+                    composable(
+                        route = "${Routes.InventSchedule.route}",
+                        arguments = listOf(navArgument("cityDocId") { type = NavType.StringType })
+                    ) {
+                        val cityDocId = it.arguments?.getString("cityDocId") ?: return@composable
+                        InventoryScheduleTest(navControllerForMain, cityDocId)
+                    }
+
+                    composable("edit_profile") {
+                        EditProfileScreen(navController)
+                    }
+
+
                 }
             }
-        }
+
+            when (currentRoute) {
+               // Routes.Home -> Home(navController, refreshTrigger = refreshTrigger)
+                else -> Text("페이지를 찾을 수 없습니다")
+            }
+            // ✅ 트리거 사용 후 초기화
+            if (refreshTrigger) {
+                LaunchedEffect(Unit) {
+                    refreshTrigger = false
+                }
+            }
+
+
     }
 }
