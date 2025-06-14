@@ -1,5 +1,6 @@
 package com.example.tripcue.frame.uicomponents.Schedule
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,71 +54,73 @@ import java.net.URLEncoder
 import java.time.LocalDate
 import java.util.UUID
 
-suspend fun fetchPlaceAutocomplete2(query: String, apiKey: String): List<PlaceResult> = withContext(Dispatchers.IO) {
-    val sessionToken = UUID.randomUUID().toString()
-    val url = "https://maps.googleapis.com/maps/api/place/autocomplete/json?" +
-            "input=${URLEncoder.encode(query, "UTF-8")}&" +
-            "key=$apiKey&sessiontoken=$sessionToken&components=country:kr"
+suspend fun fetchPlaceAutocomplete2(query: String, apiKey: String): List<PlaceResult> =
+    withContext(Dispatchers.IO) {
+        val sessionToken = UUID.randomUUID().toString()
+        val url = "https://maps.googleapis.com/maps/api/place/autocomplete/json?" +
+                "input=${URLEncoder.encode(query, "UTF-8")}&" +
+                "key=$apiKey&sessiontoken=$sessionToken&components=country:kr"
 
-    val request = Request.Builder().url(url).build()
-    val client = OkHttpClient()
+        val request = Request.Builder().url(url).build()
+        val client = OkHttpClient()
 
-    val response = client.newCall(request).execute()
-    val responseBody = response.body?.string() ?: return@withContext emptyList()
+        val response = client.newCall(request).execute()
+        val responseBody = response.body?.string() ?: return@withContext emptyList()
 
-    val json = JSONObject(responseBody)
-    val predictions = json.getJSONArray("predictions")
+        val json = JSONObject(responseBody)
+        val predictions = json.getJSONArray("predictions")
 
-    return@withContext (0 until predictions.length()).mapNotNull { i ->
-        val prediction = predictions.getJSONObject(i)
-        val description = prediction.getString("description")
-        val googlePlaceId = prediction.getString("place_id") // ✅ Google의 place_id
+        return@withContext (0 until predictions.length()).mapNotNull { i ->
+            val prediction = predictions.getJSONObject(i)
+            val description = prediction.getString("description")
+            val googlePlaceId = prediction.getString("place_id") // ✅ Google의 place_id
 
-        val latLng = fetchPlaceDetails(googlePlaceId, apiKey) ?: return@mapNotNull null
+            val latLng = fetchPlaceDetails(googlePlaceId, apiKey) ?: return@mapNotNull null
 
-        // Firestore용 고유 ID 생성
-        val db = Firebase.firestore
-        val newDocRef = db.collection("places").document()
-        val firebaseDocId = newDocRef.id
-
-        val placeResult = PlaceResult(firebaseDocId, description, latLng.first, latLng.second)
-
-        // 비동기 Firestore 저장 (필요하면 await()으로 처리)
-        newDocRef.set(placeResult).await()
-
-        placeResult
+            // Firestore용 고유 ID 생성
+//            val db = Firebase.firestore
+//            val newDocRef = db.collection("places").document()
+//            val firebaseDocId = newDocRef.id
+//
+//            val placeResult = PlaceResult(firebaseDocId, description, latLng.first, latLng.second)
+//
+//            // 비동기 Firestore 저장 (필요하면 await()으로 처리)
+//            newDocRef.set(placeResult).await()
+//
+//            placeResult
+            PlaceResult("", description, latLng.first, latLng.second)
+        }
     }
-}
 
-suspend fun fetchPlaceDetails(placeId: String, apiKey: String): Pair<Double, Double>? = withContext(Dispatchers.IO) {
-    val url = "https://maps.googleapis.com/maps/api/place/details/json?" +
-            "place_id=$placeId&key=$apiKey"
+suspend fun fetchPlaceDetails(placeId: String, apiKey: String): Pair<Double, Double>? =
+    withContext(Dispatchers.IO) {
+        val url = "https://maps.googleapis.com/maps/api/place/details/json?" +
+                "place_id=$placeId&key=$apiKey"
 
-    val request = Request.Builder().url(url).build()
-    val client = OkHttpClient()
+        val request = Request.Builder().url(url).build()
+        val client = OkHttpClient()
 
-    val response = client.newCall(request).execute()
-    val body = response.body?.string() ?: return@withContext null
+        val response = client.newCall(request).execute()
+        val body = response.body?.string() ?: return@withContext null
 
-    val json = JSONObject(body)
-    val result = json.getJSONObject("result")
-    val location = result.getJSONObject("geometry").getJSONObject("location")
+        val json = JSONObject(body)
+        val result = json.getJSONObject("result")
+        val location = result.getJSONObject("geometry").getJSONObject("location")
 
-    val lat = location.getDouble("lat")
-    val lng = location.getDouble("lng")
+        val lat = location.getDouble("lat")
+        val lng = location.getDouble("lng")
 
-    return@withContext lat to lng
-}
+        Log.d("Debug", "$lat, $lng")
+
+        return@withContext lat to lng
+    }
 
 @Composable
 fun AddScheduleTest(
     navController: NavHostController,
     cityDocId: String   // 도시 문서 ID 추가
 ) {
-    val navBackStackEntry = remember(navController.currentBackStackEntry) {
-        navController.getBackStackEntry(Routes.InventSchedule.route)
-    }
-    val scheduleViewModel: ScheduleViewModel = viewModel(navBackStackEntry)
+    val scheduleViewModel: ScheduleViewModel = viewModel()
     val errorMessage by scheduleViewModel.errorMessage.collectAsState()
 
     var location by remember { mutableStateOf("") }
@@ -251,10 +254,10 @@ fun AddScheduleTest(
                     longitude = selectedLatLng?.second
                 )
                 scheduleViewModel.addSchedule(newSchedule, cityDocId)
-                navController.popBackStack() // 뒤로가기 (InventoryScheduleTest로)
+                navController.navigate("InventoryScheduleTest/$cityDocId")
             },
-            modifier = Modifier.fillMaxWidth()
-        ) {
+                modifier = Modifier.fillMaxWidth()
+            ) {
             Text("등록하기")
         }
     }

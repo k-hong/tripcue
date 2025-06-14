@@ -7,9 +7,7 @@ sealed class Routes (val route: String, val isRoot : Boolean = true) {
     object Login : Routes(route = "Login", isRoot = false)
     object SignUp : Routes(route = "SignUp", isRoot = false)
     object FillProfile : Routes(route = "FillProfile", isRoot = false)
-    object AddDetails : Routes(route = "AddScheduleTest/{cityDocId}", isRoot = false) {
-        fun createRoute(cityDocId: String): String = "AddScheduleTest/$cityDocId"
-    }
+    object AddDetails : Routes(route = "AddScheduleTest/{cityDocId}", isRoot = false)
     object InventSchedule : Routes(route = "InventoryScheduleTest/{cityDocId}", isRoot = false)
     object InfoCard : Routes(route = "InfoCardScreen/{cityDocId}", isRoot = false)
     object FillProfileSurvey : Routes(route = "fill_profile_survey", isRoot = false)

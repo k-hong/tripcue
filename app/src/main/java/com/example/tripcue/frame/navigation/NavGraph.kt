@@ -46,6 +46,42 @@ fun NavGraph(navController: NavHostController) {
             MainScreen2(navController)
         }
 
+        composable(Routes.AddSchedule.route) {
+            AddSchedule(navController, onDone = { navController.popBackStack() })
+        }
+
+        composable(
+            route = "${Routes.AddDetails.route}",
+            arguments = listOf(navArgument("cityDocId") { type = NavType.StringType })
+        ) {
+            val cityDocId = it.arguments?.getString("cityDocId") ?: return@composable
+            AddScheduleTest(navController, cityDocId)
+        }
+
+        composable(Routes.Schedules.route) {
+            Schedules(navController)
+        }
+
+        composable(
+            route = "${Routes.InfoCard.route}",
+            arguments = listOf(navArgument("cityDocId") { type = NavType.StringType })
+        ) {
+            val cityDocId = it.arguments?.getString("cityDocId") ?: return@composable
+            InfoCardScreen(navController, cityDocId)
+        }
+
+        composable(
+            route = "${Routes.InventSchedule.route}",
+            arguments = listOf(navArgument("cityDocId") { type = NavType.StringType })
+        ) {
+            val cityDocId = it.arguments?.getString("cityDocId") ?: return@composable
+            InventoryScheduleTest(navController, cityDocId)
+        }
+
+        composable("edit_profile") {
+            EditProfileScreen(navController)
+        }
+
         composable(
             route = Routes.PlaceDetail.route,
             arguments = listOf(

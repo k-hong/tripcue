@@ -118,6 +118,7 @@ suspend fun fetchPlaceDetails2(placeId: String, apiKey: String): Pair<Double, Do
 }
 
 fun latLonToGrid(lat: Double, lon: Double): Pair<Int, Int> {
+    Log.d("Debug", "$lat, $lon")
     val RE = 6371.00877 // 지구 반경(km)
     val GRID = 5.0      // 격자 간격(km)
     val SLAT1 = 30.0    // 투영 위도1(degree)
@@ -148,6 +149,8 @@ fun latLonToGrid(lat: Double, lon: Double): Pair<Int, Int> {
 
     val x = (ra * Math.sin(theta) + XO + 0.5).toInt()
     val y = (ro - ra * Math.cos(theta) + YO + 0.5).toInt()
+
+    Log.d("Debug", "$x, $y")
 
     return x to y
 }

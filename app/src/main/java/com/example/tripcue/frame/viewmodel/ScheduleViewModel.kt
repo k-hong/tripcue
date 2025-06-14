@@ -97,20 +97,17 @@ class ScheduleViewModel(private val repository: ScheduleRepository = ScheduleRep
         }
         viewModelScope.launch {
             try {
+                Log.d("ScheduleViewModel", "Adding schedule: $schedule to cityDocId: $cityDocId")
                 val docRef = firestore.collection("users")
-                    .document(uid)
+                    .document(uid!!)
                     .collection("schedules")
                     .document(cityDocId)
                     .collection("tasks")
-                    .document(schedule.id)  // 자동 생성 ID
+                    .document(schedule.id)
 
-                // 새 ID를 schedule에 반영
-                // schedule.id = docRef.id
-
-                // Firestore에 저장
                 docRef.set(schedule).await()
+                Log.d("ScheduleViewModel", "Schedule added successfully")
 
-                // 로컬 상태에도 추가
                 _schedules.value = _schedules.value + schedule
                 _errorMessage.value = null
             } catch (e: Exception) {

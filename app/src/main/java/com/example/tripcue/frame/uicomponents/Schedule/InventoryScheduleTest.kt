@@ -58,6 +58,9 @@ fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
 //    // ScheduleTitle 안에 담긴 세부 일정 리스트 (ScheduleData 리스트)
 //    val schedules = selectedSchedule?.ScheduleData ?: emptyList()
 
+    val currentEntry = navController.currentBackStackEntry
+    Log.d("NavBackStack", "Current destination route: ${currentEntry?.destination?.route}")
+
     val navBackStackEntry = remember(navController.currentBackStackEntry) {
         navController.getBackStackEntry(Routes.Schedules.route)
     }
@@ -98,7 +101,7 @@ fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
             Text("저장된 일정 목록", style = MaterialTheme.typography.titleMedium)
             Button(onClick = {
                 if (selectedSchedule != null) {
-                    navController.navigate(Routes.AddDetails.createRoute(selectedSchedule.id))
+                    navController.navigate("${Routes.AddDetails.route.replace("{cityDocId}", cityDocId)}")
                 }
             }) {
                 Text("추가하기")
