@@ -5,7 +5,8 @@ import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.RawValue
 import java.time.LocalDate
 
-enum class Transportation(val displayName: String) {
+@Parcelize
+enum class Transportation(val displayName: String) : Parcelable {
     WALK("걷기"),
     BICYCLE("자전거"),
     TAXI("택시"),
@@ -36,11 +37,11 @@ data class ScheduleData(
 @Parcelize
 data class ScheduleTitle(
     val id: String = "", // Firestore 문서 ID
-    val title : String,
-    val location: String,
-    val startDate: LocalDate,
-    val endDate: LocalDate,
-    var ScheduleData : MutableList<ScheduleData> = mutableListOf() // 카드 클릭시 세부 일정표로 이동
+    val title : String = "",
+    val location: String = "",
+    val startDate: String = "",  // LocalDate -> String (예: "2025-06-18")
+    val endDate: String = ""    // LocalDate -> String
+//    var ScheduleData : MutableList<ScheduleData> = mutableListOf() // 카드 클릭시 세부 일정표로 이동
 ) : Parcelable
 
 data class PlaceResult( val placeId: String, val name: String, val lat: Double, val lng: Double)

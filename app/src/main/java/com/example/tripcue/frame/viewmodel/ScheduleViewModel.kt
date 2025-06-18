@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tripcue.frame.model.ScheduleData
+import com.example.tripcue.frame.model.ScheduleTitle
 import com.example.tripcue.frame.model.Transportation
 import com.example.tripcue.frame.uicomponents.Schedule.ScheduleRepository
 import com.google.firebase.Firebase
@@ -36,6 +37,8 @@ class ScheduleViewModel(private val repository: ScheduleRepository = ScheduleRep
     val schedules: StateFlow<List<ScheduleData>> = _schedules
     private val _selectedSchedule = MutableStateFlow<ScheduleData?>(null)
     val selectedSchedule: StateFlow<ScheduleData?> = _selectedSchedule
+    private val _scheduleTitles = MutableStateFlow<List<ScheduleTitle>>(emptyList())
+    val scheduleTitles: StateFlow<List<ScheduleTitle>> = _scheduleTitles
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
@@ -61,6 +64,34 @@ class ScheduleViewModel(private val repository: ScheduleRepository = ScheduleRep
 
     fun selectSchedule(schedule: ScheduleData) {
         _selectedSchedule.value = schedule
+    }
+
+    fun loadScheduleTitles() {
+        val uid = getCurrentUserUid() ?: return
+        viewModelScope.launch {
+            try {
+                val snapshot = firestore.collection("users")
+                    .document(uid)
+                    .collection("schedules")
+                    .get()
+                    .await()
+
+                for (doc in snapshot.documents) {
+                    Log.d("DebugScheduleTitle", "Document data: ${doc.data}")
+                }
+
+                val titles = snapshot.documents.mapNotNull { doc ->
+                    val scheduleTitle = doc.toObject(ScheduleTitle::class.java)?.copy(id = doc.id)
+                    scheduleTitle
+                }
+
+                _scheduleTitles.value = titles
+                _errorMessage.value = null
+            } catch (e: Exception) {
+                Log.e("ScheduleViewModel", "loadScheduleTitles error", e)
+                _errorMessage.value = "스케줄 제목 목록 불러오기 실패: ${e.message}"
+            }
+        }
     }
 
     // 스케줄 전체 불러오기
@@ -98,12 +129,13 @@ class ScheduleViewModel(private val repository: ScheduleRepository = ScheduleRep
         viewModelScope.launch {
             try {
                 Log.d("ScheduleViewModel", "Adding schedule: $schedule to cityDocId: $cityDocId")
+                val newDocId = firestore.collection("users").document().id
                 val docRef = firestore.collection("users")
-                    .document(uid!!)
+                    .document(uid)
                     .collection("schedules")
                     .document(cityDocId)
                     .collection("tasks")
-                    .document(schedule.id)
+                    .document(if (schedule.id.isEmpty()) newDocId else schedule.id)
 
                 docRef.set(schedule).await()
                 Log.d("ScheduleViewModel", "Schedule added successfully")
@@ -151,7 +183,8 @@ class ScheduleViewModel(private val repository: ScheduleRepository = ScheduleRep
                     "transportation" to schedule.transportation.name, // enum -> String 변환
                     "details" to schedule.details,
                     "latitude" to schedule.latitude,
-                    "longitude" to schedule.longitude
+                    "longitude" to schedule.longitude,
+                    "weather" to schedule.weather
                 )
                 docRef.set(dataMap).await()
                 Log.d("Coroutine", "스케줄 업데이트 성공")
@@ -173,8 +206,12 @@ class ScheduleViewModel(private val repository: ScheduleRepository = ScheduleRep
         }
     }
 
+    fun setSchedule(schedule: ScheduleData) {
+        _selectedSchedule.value = schedule
+    }
 
-        fun getCurrentUserUid(): String? {
+
+    fun getCurrentUserUid(): String? {
         return FirebaseAuth.getInstance().currentUser?.uid
     }
 }

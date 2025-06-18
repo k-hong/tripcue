@@ -2,6 +2,8 @@ package com.example.tripcue.frame.uicomponents.Schedule
 
 import android.app.Activity
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -57,6 +59,7 @@ import org.json.JSONObject
 import java.net.URLEncoder
 import java.util.UUID
 import androidx.lifecycle.viewModelScope
+import com.example.tripcue.frame.viewmodel.SharedScheduleViewModel
 
 const val DEFAULT_LAT = 37.5665  // 서울 위도
 const val DEFAULT_LNG = 126.9780 // 서울 경도
@@ -168,6 +171,8 @@ fun InfoCardScreen(
     val selectedSchedule = navController.previousBackStackEntry
         ?.savedStateHandle
         ?.get<ScheduleData>("selectedSchedule")
+//    val sharedScheduleViewModel: SharedScheduleViewModel = viewModel()
+//    val selectedSchedule: ScheduleData? by sharedScheduleViewModel.selectedSchedule.collectAsState(initial = null)
 
     val activity = LocalActivity.current as ComponentActivity
     var location by remember { mutableStateOf(selectedSchedule?.location ?: "") }

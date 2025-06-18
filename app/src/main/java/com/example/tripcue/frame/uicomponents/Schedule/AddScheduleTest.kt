@@ -36,11 +36,13 @@ import com.example.tripcue.TripcueApplication
 import com.example.tripcue.frame.model.PlaceResult
 import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.model.ScheduleData
+import com.example.tripcue.frame.model.ScheduleTitle
 import com.example.tripcue.frame.model.Transportation
 import com.example.tripcue.frame.model.WeatherInfo
 import com.example.tripcue.frame.uicomponents.fetchPlaceAutocomplete
 import com.example.tripcue.frame.uicomponents.getApiKeyFromManifest
 import com.example.tripcue.frame.viewmodel.ScheduleViewModel
+import com.example.tripcue.frame.viewmodel.SharedScheduleViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.Dispatchers
@@ -122,6 +124,7 @@ fun AddScheduleTest(
 ) {
     val scheduleViewModel: ScheduleViewModel = viewModel()
     val errorMessage by scheduleViewModel.errorMessage.collectAsState()
+    val sharedScheduleViewModel: SharedScheduleViewModel = viewModel()
 
     var location by remember { mutableStateOf("") }
 //    var date by remember { mutableStateOf(LocalDate.now()) }
@@ -254,11 +257,39 @@ fun AddScheduleTest(
                     longitude = selectedLatLng?.second
                 )
                 scheduleViewModel.addSchedule(newSchedule, cityDocId)
-                navController.navigate("InventoryScheduleTest/$cityDocId")
+                // ✅ 새 ScheduleTitle 생성 (단일 데이터 포함)
+                val scheduleTitle = ScheduleTitle(
+                    id = cityDocId,
+                    title = finalLocation, // 또는 다른 적절한 제목
+                    location = finalLocation,
+                    startDate = selectedDate.toString(),
+                    endDate = selectedDate.toString()
+                )
+
+                // ✅ 공유 ViewModel에 설정
+                sharedScheduleViewModel.setSchedule(scheduleTitle)
+
+                // ✅ 이전 화면으로 돌아가기
+                navController.navigate(Routes.InventSchedule.createRoute(cityDocId)) {
+                    popUpTo(Routes.AddSchedule.route) { inclusive = true }
+                }
             },
                 modifier = Modifier.fillMaxWidth()
             ) {
             Text("등록하기")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = {
+                navController.navigate(Routes.InventSchedule.createRoute(cityDocId)) {
+                    popUpTo(Routes.AddSchedule.route) { inclusive = true }
+                }
+                      },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("닫기")
         }
     }
 }
