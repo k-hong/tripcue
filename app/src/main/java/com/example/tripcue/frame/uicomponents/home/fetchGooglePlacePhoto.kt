@@ -35,13 +35,13 @@ suspend fun fetchGooglePlacePhoto(placeName: String, context: Context): ImageBit
             .addOnSuccessListener { response ->
                 val prediction = response.autocompletePredictions.firstOrNull()
                 if (prediction == null) {
-                    Log.w(TAG, "⚠ No autocomplete prediction found.")
+                    Log.w(TAG, "No autocomplete prediction found.")
                     continuation.resume(null)
                     return@addOnSuccessListener
                 }
 
                 val placeId = prediction.placeId
-                Log.d(TAG, "📍 Found placeId: $placeId")
+                Log.d(TAG, "Found placeId: $placeId")
 
                 val placeRequest = FetchPlaceRequest.builder(placeId, listOf(Place.Field.PHOTO_METADATAS)).build()
                 placesClient.fetchPlace(placeRequest)

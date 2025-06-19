@@ -28,11 +28,9 @@ object GooglePlaceApi {
         }
         val client = Places.createClient(context)
 
-        // 중복 장소를 관리하기 위한 Set
         val seenTitles = mutableSetOf<String>()
         val seenCoreNames = mutableSetOf<String>()
 
-        // [수정] 1. 관심사 기반 결과를 저장할 별도의 리스트 생성
         val interestResults = mutableListOf<PlaceInfo>()
         val perKeywordLimit = when (interests.size) {
             1 -> 15; 2 -> 8; 3 -> 7; else -> 5
