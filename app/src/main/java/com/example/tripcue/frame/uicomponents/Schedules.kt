@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,8 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -127,13 +132,23 @@ fun Schedules(navController: NavHostController) { //스케쥴 타이틀 카드 �
                     elevation = CardDefaults.cardElevation(4.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            schedule.title,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            fontSize = 20.sp
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                schedule.title,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp,
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(onClick = { deleteSchedule(schedule.id) }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "삭제",
+                                    tint = Color.White
+                                )
+                            }
+                        }
                         Divider(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -148,4 +163,14 @@ fun Schedules(navController: NavHostController) { //스케쥴 타이틀 카드 �
             }
         }
     }
+}
+
+fun deleteSchedule(scheduleId: String) {
+    val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+    FirebaseFirestore.getInstance()
+        .collection("users")
+        .document(userId)
+        .collection("schedules")
+        .document(scheduleId)
+        .delete()
 }
