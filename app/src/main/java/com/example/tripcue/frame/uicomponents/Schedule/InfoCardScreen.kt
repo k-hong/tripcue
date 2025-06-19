@@ -61,18 +61,22 @@ import java.util.UUID
 import androidx.lifecycle.viewModelScope
 import com.example.tripcue.frame.viewmodel.SharedScheduleViewModel
 
+// 서울 기본 좌표 (위치 정보 없을 때 사용)
 const val DEFAULT_LAT = 37.5665  // 서울 위도
 const val DEFAULT_LNG = 126.9780 // 서울 경도
 
+/**
+ * 장소 자동완성 검색 및 결과 Firestore 저장 (PlaceResult 리스트 반환)
+ */
 suspend fun fetchPlaceAutocomplete3(query: String, apiKey: String): List<PlaceResult> = withContext(Dispatchers.IO) {
     val sessionToken = UUID.randomUUID().toString()
+
     val url = "https://maps.googleapis.com/maps/api/place/autocomplete/json?" +
             "input=${URLEncoder.encode(query, "UTF-8")}&" +
             "key=$apiKey&sessiontoken=$sessionToken&components=country:kr"
 
     val request = Request.Builder().url(url).build()
     val client = OkHttpClient()
-
     val response = client.newCall(request).execute()
     val responseBody = response.body?.string() ?: return@withContext emptyList()
 
@@ -82,24 +86,26 @@ suspend fun fetchPlaceAutocomplete3(query: String, apiKey: String): List<PlaceRe
     return@withContext (0 until predictions.length()).mapNotNull { i ->
         val prediction = predictions.getJSONObject(i)
         val description = prediction.getString("description")
-        val googlePlaceId = prediction.getString("place_id") // ✅ Google의 place_id
+        val googlePlaceId = prediction.getString("place_id")
 
+        // 상세 정보(위경도) 가져오기
         val latLng = fetchPlaceDetails(googlePlaceId, apiKey) ?: return@mapNotNull null
 
-        // Firestore용 고유 ID 생성
+        // Firestore에 장소 정보 저장
         val db = Firebase.firestore
         val newDocRef = db.collection("places").document()
         val firebaseDocId = newDocRef.id
-
         val placeResult = PlaceResult(firebaseDocId, description, latLng.first, latLng.second)
 
-        // 비동기 Firestore 저장 (필요하면 await()으로 처리)
         newDocRef.set(placeResult).await()
 
         placeResult
     }
 }
 
+/**
+ * 장소 ID(place_id)를 통해 위도, 경도 반환
+ */
 suspend fun fetchPlaceDetails2(placeId: String, apiKey: String): Pair<Double, Double>? = withContext(Dispatchers.IO) {
     val url = "https://maps.googleapis.com/maps/api/place/details/json?" +
             "place_id=$placeId&key=$apiKey"
@@ -120,16 +126,19 @@ suspend fun fetchPlaceDetails2(placeId: String, apiKey: String): Pair<Double, Do
     return@withContext lat to lng
 }
 
+/**
+ * 위도/경도를 기상청 격자 좌표로 변환하는 함수 (단기예보 API용)
+ */
 fun latLonToGrid(lat: Double, lon: Double): Pair<Int, Int> {
-    Log.d("Debug", "$lat, $lon")
-    val RE = 6371.00877 // 지구 반경(km)
-    val GRID = 5.0      // 격자 간격(km)
-    val SLAT1 = 30.0    // 투영 위도1(degree)
-    val SLAT2 = 60.0    // 투영 위도2(degree)
-    val OLON = 126.0    // 기준점 경도(degree)
-    val OLAT = 38.0     // 기준점 위도(degree)
-    val XO = 43         // 기준점 X좌표(GRID)
-    val YO = 136        // 기준점 Y좌표(GRID)
+    // 수치 예보 격자 좌표 변환 공식 (기상청 공식 문서 기반)
+    val RE = 6371.00877 // 지구 반경
+    val GRID = 5.0      // 격자 간격
+    val SLAT1 = 30.0    // 표준 위도 1
+    val SLAT2 = 60.0    // 표준 위도 2
+    val OLON = 126.0    // 기준 경도
+    val OLAT = 38.0     // 기준 위도
+    val XO = 43         // 기준 X좌표
+    val YO = 136        // 기준 Y좌표
 
     val DEGRAD = Math.PI / 180.0
     val re = RE / GRID
@@ -153,11 +162,15 @@ fun latLonToGrid(lat: Double, lon: Double): Pair<Int, Int> {
     val x = (ra * Math.sin(theta) + XO + 0.5).toInt()
     val y = (ro - ra * Math.cos(theta) + YO + 0.5).toInt()
 
-    Log.d("Debug", "$x, $y")
-
     return x to y
 }
 
+/**
+ * 여행 일정 상세 정보를 보여주는 화면
+ * - 수정 모드 지원
+ * - 장소 자동완성 + 날씨 불러오기
+ * - PDF 내보내기
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InfoCardScreen(
@@ -165,60 +178,58 @@ fun InfoCardScreen(
     cityDocId: String
 ) {
     val context = LocalContext.current
+    val activity = LocalActivity.current as ComponentActivity
     val weatherViewModel: WeatherViewModel = viewModel()
     val scheduleViewModel: ScheduleViewModel = viewModel()
-    // val selectedSchedule by scheduleViewModel.selectedSchedule.collectAsState()
+
+    // 이전 화면에서 전달된 ScheduleData (selectedSchedule)
     val selectedSchedule = navController.previousBackStackEntry
         ?.savedStateHandle
         ?.get<ScheduleData>("selectedSchedule")
-//    val sharedScheduleViewModel: SharedScheduleViewModel = viewModel()
-//    val selectedSchedule: ScheduleData? by sharedScheduleViewModel.selectedSchedule.collectAsState(initial = null)
-
-    val activity = LocalActivity.current as ComponentActivity
-    var location by remember { mutableStateOf(selectedSchedule?.location ?: "") }
-    var latitude by remember { mutableStateOf(selectedSchedule?.latitude ?: DEFAULT_LAT) }
-    var longitude by remember { mutableStateOf(selectedSchedule?.longitude ?: DEFAULT_LNG) }
-
 
     if (selectedSchedule == null) {
         Text("선택된 일정이 없습니다.")
         return
     }
 
-    val initialSchedule = selectedSchedule!!
-
+    // 초기값 세팅
+    val initialSchedule = selectedSchedule
     var isEditing by remember { mutableStateOf(false) }
 
-    val parsedDate = try {
-        LocalDate.parse(initialSchedule.date)
-    } catch (e: DateTimeParseException) {
-        LocalDate.now()
+    var location by remember { mutableStateOf(initialSchedule.location) }
+    var latitude by remember { mutableStateOf(initialSchedule.latitude ?: DEFAULT_LAT) }
+    var longitude by remember { mutableStateOf(initialSchedule.longitude ?: DEFAULT_LNG) }
+    var date by remember {
+        mutableStateOf(
+            try {
+                LocalDate.parse(initialSchedule.date)
+            } catch (e: DateTimeParseException) {
+                LocalDate.now()
+            }
+        )
     }
-
-    var date by remember { mutableStateOf(parsedDate) }
     var transportation by remember { mutableStateOf(initialSchedule.transportation) }
     var details by remember { mutableStateOf(initialSchedule.details) }
     var showDatePicker by remember { mutableStateOf(false) }
 
     val weatherInfo by weatherViewModel.weatherInfo.collectAsState()
 
+    // 장소 검색용 상태
     var query by remember { mutableStateOf(location) }
-    var predictions by remember { mutableStateOf(listOf<PlaceResult>()) }
+    var predictions by remember { mutableStateOf(emptyList<PlaceResult>()) }
     var expanded by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
-
     val apiKey = getApiKeyFromManifest()
 
-    // 검색어가 2글자 이상일 때 예측 결과 가져오기
+    // 🔍 검색어 입력 시 자동완성 요청
     LaunchedEffect(query) {
         if (!isEditing) return@LaunchedEffect
         if (query.length >= 2) {
             try {
-                val results = fetchPlaceAutocomplete3(query, apiKey)
-                predictions = results
+                predictions = fetchPlaceAutocomplete3(query, apiKey)
                 expanded = predictions.isNotEmpty()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 predictions = emptyList()
                 expanded = false
             }
@@ -228,25 +239,24 @@ fun InfoCardScreen(
         }
     }
 
-    // 날짜 + 위치 변경 시 날씨 정보 가져오기
+    // 📡 날짜 or 위치 변경 시 날씨 정보 요청
     LaunchedEffect(date, latitude, longitude) {
         val (nx, ny) = latLonToGrid(latitude, longitude)
         weatherViewModel.fetchWeatherForDateAndLocation(date, nx, ny)
     }
 
-    fun onSave(updatedSchedule: ScheduleData, cityDocId: String) {
-        Log.d("Caller", "업데이트 스케줄 호출 시도")
-        scheduleViewModel.updateSchedule(updatedSchedule, cityDocId) { success ->
-            if (success) {
-                // 업데이트 성공 시 UI 처리, 예: 화면 닫기, 토스트 메시지 띄우기 등
-                Log.d("Schedule", "스케줄 업데이트 성공")
-            } else {
-                // 실패 시 처리, 예: 에러 메시지 표시
-                Log.d("Schedule", "스케줄 업데이트 실패")
-            }
+    /**
+     * 일정 수정 저장 처리
+     */
+    fun onSave(updated: ScheduleData, cityDocId: String) {
+        scheduleViewModel.updateSchedule(updated, cityDocId) { success ->
+            Log.d("Schedule", if (success) "업데이트 성공" else "업데이트 실패")
         }
     }
 
+    /**
+     * 일정 정보를 PDF로 내보내기
+     */
     fun onExport() {
         val info = """
             📍 위치: $location
@@ -256,50 +266,46 @@ fun InfoCardScreen(
             🌡️ 기온: ${weatherInfo?.temperature ?: "알 수 없음"} ℃
             📝 상세 정보: $details
         """.trimIndent()
-
         exportPdfAndShare(context, "Trip_Info_${date}.pdf", info)
     }
 
+    // 🧾 UI 시작
     Card(
-        modifier = Modifier
-            .fillMaxWidth(0.9f)
-            .padding(16.dp),
+        modifier = Modifier.fillMaxWidth(0.9f).padding(16.dp),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardDefaults.cardElevation(8.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+            // 상단 버튼 영역 (수정 / 내보내기)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 TextButton(
                     onClick = {
                         isEditing = !isEditing
-                        Log.d("Debug", "isEditing before toggle: $isEditing")
-                        Log.d("Debug", "isEditing before toggle: $selectedSchedule.id")
                         if (isEditing) {
-                            val updatedSchedule = ScheduleData(
-                                id = selectedSchedule.id,
-                                location = location,
-                                latitude = latitude,
-                                longitude = longitude,
-                                date = date.toString(),
-                                transportation = transportation,
-                                details = details
+                            // 편집 완료 → 저장
+                            onSave(
+                                ScheduleData(
+                                    id = selectedSchedule.id,
+                                    location = location,
+                                    latitude = latitude,
+                                    longitude = longitude,
+                                    date = date.toString(),
+                                    transportation = transportation,
+                                    details = details
+                                ),
+                                cityDocId
                             )
-                            onSave(updatedSchedule, cityDocId)
                         }
-                            // 편집 종료 시 자동완성 리스트 숨기기
-                            expanded = false
-                            // 편집 종료 시 선택된 장소 이름으로 쿼리 초기화
-                            if (!isEditing) query = location
+                        // UI 리셋
+                        expanded = false
+                        if (!isEditing) query = location
                     },
                     colors = ButtonDefaults.textButtonColors(
                         containerColor = Color.LightGray,
                         contentColor = Color.Black
                     )
                 ) {
-                    Text(text = if (isEditing) "수정 완료" else "수정", fontSize = 14.sp)
+                    Text(if (isEditing) "수정 완료" else "수정", fontSize = 14.sp)
                 }
 
                 TextButton(
@@ -313,8 +319,9 @@ fun InfoCardScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
 
+            // 위치 입력 및 자동완성
             OutlinedTextField(
                 value = if (isEditing) query else location,
                 onValueChange = {
@@ -324,7 +331,7 @@ fun InfoCardScreen(
                     }
                 },
                 label = { Text("위치", fontSize = 12.sp, color = Color.Gray) },
-                leadingIcon = { Icon(Icons.Default.Place, contentDescription = "위치 아이콘") },
+                leadingIcon = { Icon(Icons.Default.Place, contentDescription = null) },
                 enabled = isEditing,
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
@@ -342,16 +349,10 @@ fun InfoCardScreen(
                             location = prediction.name
                             query = location
                             expanded = false
-
                             coroutineScope.launch {
-                                try {
-                                    val latLng = fetchPlaceDetails2(prediction.placeId, apiKey)
-                                    latLng?.let {
-                                        latitude = it.first
-                                        longitude = it.second
-                                    }
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
+                                fetchPlaceDetails2(prediction.placeId, apiKey)?.let {
+                                    latitude = it.first
+                                    longitude = it.second
                                 }
                             }
                         }
@@ -359,19 +360,17 @@ fun InfoCardScreen(
                 }
             }
 
+            // 날짜 선택
             OutlinedTextField(
                 value = date.toString(),
                 onValueChange = {},
                 label = { Text("날짜", fontSize = 12.sp, color = Color.Gray) },
-                leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = "날짜 아이콘") },
+                leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null) },
                 enabled = false,
                 readOnly = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(
-                        if (isEditing) Modifier.clickable { showDatePicker = true }
-                        else Modifier
-                    ),
+                modifier = Modifier.fillMaxWidth().then(
+                    if (isEditing) Modifier.clickable { showDatePicker = true } else Modifier
+                ),
                 textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
             )
 
@@ -386,60 +385,54 @@ fun InfoCardScreen(
                 )
             }
 
+            // 이동 수단 선택
             DropdownMenuBox(
                 selected = transportation,
                 onSelect = { if (isEditing) transportation = it },
                 enabled = isEditing
             )
 
+            // 날씨 상태
             OutlinedTextField(
                 value = weatherInfo?.status ?: "",
                 onValueChange = {},
                 label = { Text("날씨 상태") },
-                leadingIcon = { Icon(Icons.Default.WbSunny, contentDescription = "날씨 상태 아이콘") },
+                leadingIcon = { Icon(Icons.Default.WbSunny, contentDescription = null) },
                 enabled = false,
                 modifier = Modifier.fillMaxWidth(),
-                textStyle = TextStyle(
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    fontSize = 14.sp
-                )
+                textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
             )
 
+            // 기온
             OutlinedTextField(
                 value = weatherInfo?.temperature?.toString() ?: "",
                 onValueChange = {},
                 label = { Text("기온 (℃)") },
-                leadingIcon = { Icon(Icons.Default.Thermostat, contentDescription = "기온 아이콘") },
+                leadingIcon = { Icon(Icons.Default.Thermostat, contentDescription = null) },
                 enabled = false,
                 modifier = Modifier.fillMaxWidth(),
-                textStyle = TextStyle(
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    fontSize = 14.sp
-                )
+                textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
             )
 
+            // 상세 정보
             OutlinedTextField(
                 value = details,
                 onValueChange = { if (isEditing) details = it },
                 label = { Text("상세 정보", fontSize = 12.sp, color = Color.Gray) },
-                leadingIcon = { Icon(Icons.Default.Description, contentDescription = "상세 정보 아이콘") },
+                leadingIcon = { Icon(Icons.Default.Description, contentDescription = null) },
                 enabled = isEditing,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp),
+                modifier = Modifier.fillMaxWidth().height(100.dp),
                 textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
             )
-        }
-        Button(
-            onClick = {
-                navController.popBackStack()
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray)
-        ) {
-            Text("닫기")
+
+            // 닫기 버튼
+            Button(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray)
+            ) {
+                Text("닫기")
+            }
         }
     }
 }

@@ -1,6 +1,9 @@
 package com.example.tripcue.frame.uicomponents.Schedule
 
+import android.R.attr.minDate
 import android.util.Log
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +22,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -54,14 +59,16 @@ import okhttp3.Request
 import org.json.JSONObject
 import java.net.URLEncoder
 import java.time.LocalDate
+import java.time.ZoneId
 import java.util.UUID
 
+// 장소 자동완성 (Autocomplete) API를 호출하여 추천 위치 목록을 가져오는 suspend 함수
 suspend fun fetchPlaceAutocomplete2(query: String, apiKey: String): List<PlaceResult> =
     withContext(Dispatchers.IO) {
-        val sessionToken = UUID.randomUUID().toString()
+        val sessionToken = UUID.randomUUID().toString() // 사용자 세션을 식별하기 위한 토큰
         val url = "https://maps.googleapis.com/maps/api/place/autocomplete/json?" +
                 "input=${URLEncoder.encode(query, "UTF-8")}&" +
-                "key=$apiKey&sessiontoken=$sessionToken&components=country:kr"
+                "key=$apiKey&sessiontoken=$sessionToken&components=country:kr" // 한국 지역에 한정
 
         val request = Request.Builder().url(url).build()
         val client = OkHttpClient()
@@ -72,28 +79,21 @@ suspend fun fetchPlaceAutocomplete2(query: String, apiKey: String): List<PlaceRe
         val json = JSONObject(responseBody)
         val predictions = json.getJSONArray("predictions")
 
+        // 각 추천 결과에서 description과 place_id를 추출 후 좌표를 조회하여 리스트 생성
         return@withContext (0 until predictions.length()).mapNotNull { i ->
             val prediction = predictions.getJSONObject(i)
             val description = prediction.getString("description")
-            val googlePlaceId = prediction.getString("place_id") // ✅ Google의 place_id
+            val googlePlaceId = prediction.getString("place_id") // 장소 고유 식별자
 
+            // 좌표 조회 (비동기)
             val latLng = fetchPlaceDetails(googlePlaceId, apiKey) ?: return@mapNotNull null
 
-            // Firestore용 고유 ID 생성
-//            val db = Firebase.firestore
-//            val newDocRef = db.collection("places").document()
-//            val firebaseDocId = newDocRef.id
-//
-//            val placeResult = PlaceResult(firebaseDocId, description, latLng.first, latLng.second)
-//
-//            // 비동기 Firestore 저장 (필요하면 await()으로 처리)
-//            newDocRef.set(placeResult).await()
-//
-//            placeResult
+            // Firestore 저장은 생략하고 빈 ID 사용
             PlaceResult("", description, latLng.first, latLng.second)
         }
     }
 
+// Google Places API를 통해 place_id에 해당하는 장소의 좌표(lat, lng)를 조회하는 함수
 suspend fun fetchPlaceDetails(placeId: String, apiKey: String): Pair<Double, Double>? =
     withContext(Dispatchers.IO) {
         val url = "https://maps.googleapis.com/maps/api/place/details/json?" +
@@ -120,14 +120,17 @@ suspend fun fetchPlaceDetails(placeId: String, apiKey: String): Pair<Double, Dou
 @Composable
 fun AddScheduleTest(
     navController: NavHostController,
-    cityDocId: String   // 도시 문서 ID 추가
+    cityDocId: String   // Firestore의 도시 문서 ID
 ) {
     val scheduleViewModel: ScheduleViewModel = viewModel()
     val errorMessage by scheduleViewModel.errorMessage.collectAsState()
-    val sharedScheduleViewModel: SharedScheduleViewModel = viewModel()
+    val sharedScheduleViewModel: SharedScheduleViewModel = viewModel(
+        LocalActivity.current as ComponentActivity
+    )
+    val selectedSchedule by sharedScheduleViewModel.selectedSchedule.collectAsState()
 
+    // 입력 상태 저장 변수들
     var location by remember { mutableStateOf("") }
-//    var date by remember { mutableStateOf(LocalDate.now()) }
     var transportation by remember { mutableStateOf(Transportation.BUS) }
     var details by remember { mutableStateOf("") }
     var selectedLatLng by remember { mutableStateOf<Pair<Double, Double>?>(null) }
@@ -135,12 +138,18 @@ fun AddScheduleTest(
     var showDatePicker by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
 
+    // 스케줄의 시작/종료일 파싱
+    val minDate = selectedSchedule?.startDate?.let { LocalDate.parse(it) }
+    val maxDate = selectedSchedule?.endDate?.let { LocalDate.parse(it) }
+
+    // 장소 자동완성을 위한 검색어 및 추천 결과 상태
     var locationQuery by remember { mutableStateOf("") }
     var suggestions by remember { mutableStateOf<List<PlaceResult>>(emptyList()) }
     var expanded by remember { mutableStateOf(false) }
 
     val apiKey = getApiKeyFromManifest()
 
+    // 사용자 입력이 변경될 때마다 자동완성 API 호출
     LaunchedEffect(locationQuery) {
         if (locationQuery.length < 2) {
             suggestions = emptyList()
@@ -152,6 +161,7 @@ fun AddScheduleTest(
         expanded = suggestions.isNotEmpty()
     }
 
+    // UI 레이아웃
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -161,6 +171,7 @@ fun AddScheduleTest(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // 위치 입력 필드
         OutlinedTextField(
             value = if (location.isNotEmpty()) location else locationQuery,
             onValueChange = {
@@ -171,6 +182,7 @@ fun AddScheduleTest(
             modifier = Modifier.fillMaxWidth()
         )
 
+        // 자동완성 추천 목록 드롭다운
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
@@ -191,105 +203,138 @@ fun AddScheduleTest(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = selectedDate.toString(),
-            onValueChange = {},
-            label = { Text("날짜") },
-            enabled = false,
-            readOnly = true,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showDatePicker = true }
-        )
-
-        if (showDatePicker) {
-            DatePickerDialog(
-                initialDate = selectedDate,
-                onDismissRequest = { showDatePicker = false },
-                onDateChange = {
-                    selectedDate = it
-                    showDatePicker = false
-                }
+        Column {
+            // 날짜 선택 필드 (DatePicker로 날짜 선택)
+            OutlinedTextField(
+                value = selectedDate.toString(),
+                onValueChange = {},
+                label = { Text("날짜") },
+                enabled = false,
+                readOnly = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showDatePicker = true }
             )
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            // 날짜 선택 다이얼로그 (제한 적용)
+            if (showDatePicker && minDate != null && maxDate != null ) {
+                val context = LocalContext.current
 
-        DropdownMenuBox(
-            selected = transportation,
-            onSelect = { transportation = it },
-            enabled = true
-        )
+                DisposableEffect(showDatePicker) {
+                    val dialog = android.app.DatePickerDialog(
+                        context,
+                        { _, year, month, dayOfMonth ->
+                            selectedDate = LocalDate.of(year, month + 1, dayOfMonth)
+                            showDatePicker = false
+                        },
+                        selectedDate.year,
+                        selectedDate.monthValue - 1,
+                        selectedDate.dayOfMonth
+                    )
 
-        Spacer(modifier = Modifier.height(8.dp))
+                    dialog.datePicker.minDate =
+                        minDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    dialog.datePicker.maxDate =
+                        maxDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-        OutlinedTextField(
-            value = details,
-            onValueChange = { details = it },
-            label = { Text("상세 정보") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
-        )
+                    dialog.setOnCancelListener {
+                        showDatePicker = false
+                    }
 
-        Spacer(modifier = Modifier.height(16.dp))
+                    dialog.show()
 
-        if (errorMessage != null) {
-            Text(
-                text = errorMessage!!,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-        }
-
-        Button(
-            onClick = {
-                val scheduleId = UUID.randomUUID().toString()
-                val finalLocation = if (location.isNotEmpty()) location else locationQuery
-                val newSchedule = ScheduleData(
-                    id = scheduleId,
-                    location = finalLocation,
-                    date = selectedDate.toString(),
-                    transportation = transportation,
-                    weather = null, // AddSchedule 단계에서는 날씨 정보 없음
-                    details = details,
-                    latitude = selectedLatLng?.first,
-                    longitude = selectedLatLng?.second
-                )
-                scheduleViewModel.addSchedule(newSchedule, cityDocId)
-                // ✅ 새 ScheduleTitle 생성 (단일 데이터 포함)
-                val scheduleTitle = ScheduleTitle(
-                    id = cityDocId,
-                    title = finalLocation, // 또는 다른 적절한 제목
-                    location = finalLocation,
-                    startDate = selectedDate.toString(),
-                    endDate = selectedDate.toString()
-                )
-
-                // ✅ 공유 ViewModel에 설정
-                sharedScheduleViewModel.setSchedule(scheduleTitle)
-
-                // ✅ 이전 화면으로 돌아가기
-                navController.navigate(Routes.InventSchedule.createRoute(cityDocId)) {
-                    popUpTo(Routes.AddSchedule.route) { inclusive = true }
+                    onDispose {
+                        dialog.dismiss()
+                    }
                 }
-            },
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 교통수단 선택 드롭다운
+            DropdownMenuBox(
+                selected = transportation,
+                onSelect = { transportation = it },
+                enabled = true
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 상세 정보 입력 필드
+            OutlinedTextField(
+                value = details,
+                onValueChange = { details = it },
+                label = { Text("상세 정보") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 에러 메시지 표시
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage!!,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+
+            // "등록하기" 버튼 - 스케줄 및 타이틀 저장 후 이동
+            Button(
+                onClick = {
+                    val scheduleId = UUID.randomUUID().toString()
+                    val finalLocation = if (location.isNotEmpty()) location else locationQuery
+
+                    // 스케줄 데이터 생성
+                    val newSchedule = ScheduleData(
+                        id = scheduleId,
+                        location = finalLocation,
+                        date = selectedDate.toString(),
+                        transportation = transportation,
+                        weather = null, // 날씨 정보는 아직 없음
+                        details = details,
+                        latitude = selectedLatLng?.first,
+                        longitude = selectedLatLng?.second
+                    )
+
+                    // Firestore에 저장
+                    scheduleViewModel.addSchedule(newSchedule, cityDocId)
+
+                    // 스케줄 타이틀 생성 및 공유 ViewModel에 저장
+                    val scheduleTitle = ScheduleTitle(
+                        id = cityDocId,
+                        title = finalLocation,
+                        location = finalLocation,
+                        startDate = selectedDate.toString(),
+                        endDate = selectedDate.toString()
+                    )
+                    sharedScheduleViewModel.setSchedule(scheduleTitle)
+
+                    // 일정 목록 화면으로 이동
+                    navController.navigate(Routes.InventSchedule.createRoute(cityDocId)) {
+                        popUpTo(Routes.AddSchedule.route) { inclusive = true } // 현재 화면 제거
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
-            Text("등록하기")
-        }
+                Text("등록하기")
+            }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Button(
-            onClick = {
-                navController.navigate(Routes.InventSchedule.createRoute(cityDocId)) {
-                    popUpTo(Routes.AddSchedule.route) { inclusive = true }
-                }
-                      },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("닫기")
+            // "닫기" 버튼 - 화면 이동만 수행
+            Button(
+                onClick = {
+                    navController.navigate(Routes.InventSchedule.createRoute(cityDocId)) {
+                        popUpTo(Routes.AddSchedule.route) { inclusive = true }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("닫기")
+            }
         }
     }
 }

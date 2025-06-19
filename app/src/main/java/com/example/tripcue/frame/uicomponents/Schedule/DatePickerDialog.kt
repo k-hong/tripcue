@@ -15,27 +15,34 @@ import java.time.ZoneId
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DatePickerDialog(
-    initialDate: LocalDate,
-    onDismissRequest: () -> Unit,
-    onDateChange: (LocalDate) -> Unit
+    initialDate: LocalDate,                     // 초기 날짜 (기본 선택값)
+    onDismissRequest: () -> Unit,               // 다이얼로그 닫기 콜백
+    onDateChange: (LocalDate) -> Unit           // 날짜가 선택되었을 때 호출되는 콜백
 ) {
+    // 초기 날짜를 milliseconds(UTC 기준)로 변환
     val initialDateMillis = initialDate.atStartOfDay(ZoneId.systemDefault())
         .toInstant()
         .toEpochMilli()
 
+    // DatePicker 상태 저장 (선택된 날짜를 기억함)
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialDateMillis)
 
+    // AlertDialog를 사용하여 DatePicker 다이얼로그 구성
     AlertDialog(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = onDismissRequest,    // 바깥을 눌렀을 때 또는 취소 시 실행
         confirmButton = {
-            TextButton(onClick = {
-                datePickerState.selectedDateMillis?.let {
-                    val selectedDate = Instant.ofEpochMilli(it)
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate()
-                    onDateChange(selectedDate)
+            TextButton(
+                onClick = {
+                    // 선택된 날짜가 존재할 경우 처리
+                    datePickerState.selectedDateMillis?.let {
+                        // milliseconds → LocalDate로 변환
+                        val selectedDate = Instant.ofEpochMilli(it)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                        onDateChange(selectedDate) // 선택된 날짜 전달
+                    }
                 }
-            }) {
+            ) {
                 Text("확인")
             }
         },
@@ -45,8 +52,9 @@ fun DatePickerDialog(
             }
         },
         text = {
+            // Material3의 DatePicker 컴포넌트 표시
             DatePicker(state = datePickerState)
         },
-        properties = DialogProperties()
+        properties = DialogProperties() // 기본 다이얼로그 속성 사용
     )
 }

@@ -1,109 +1,86 @@
 package com.example.tripcue.frame.uicomponents.Schedule
 
+// 필요한 Android 및 Compose 관련 라이브러리 임포트
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.tripcue.frame.viewmodel.ScheduleViewModel
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.model.ScheduleData
-import kotlin.math.absoluteValue
-import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.tripcue.frame.viewmodel.ScheduleViewModel
 import com.example.tripcue.frame.viewmodel.SharedScheduleViewModel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
 
+/**
+ * 선택된 스케줄의 요약 정보를 보여주고,
+ * 해당 스케줄에 포함된 세부 일정을 가로 슬라이드 형식으로 보여주는 화면 Composable
+ *
+ * @param navController 네비게이션 제어를 위한 컨트롤러
+ * @param cityDocId 현재 선택된 도시 문서 ID (스케줄 식별자)
+ */
 @Composable
 fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
-//    val savedStateHandle = navController.previousBackStackEntry?.savedStateHandle
-//    val selectedSchedule = savedStateHandle?.get<ScheduleTitle>("selectedSchedule")
-//
-//    // ScheduleTitle 안에 담긴 세부 일정 리스트 (ScheduleData 리스트)
-//    val schedules = selectedSchedule?.ScheduleData ?: emptyList()
-
     val context = LocalContext.current
 
+    // 현재 네비게이션 스택에서 최상위 엔트리 가져오기 (디버그용)
     val currentEntry = navController.currentBackStackEntry
     Log.d("NavBackStack", "Current destination route: ${currentEntry?.destination?.route}")
 
-//    val navBackStackEntry = remember(navController.currentBackStackEntry) {
-//        navController.getBackStackEntry(Routes.Schedules.route)
-//    }
-//    val scheduleViewModel: ScheduleViewModel = viewModel(navBackStackEntry)
-//    val selectedSchedule = navController
-//        .previousBackStackEntry
-//        ?.savedStateHandle
-//        ?.get<ScheduleTitle>("selectedSchedule")
-//    val navBackStackEntry by navController.currentBackStackEntryAsState()
-//    val parentEntry = remember(navBackStackEntry) {
-//        navController.getBackStackEntry(Routes.Schedules.route)
-//    }
-//    val sharedScheduleViewModel: SharedScheduleViewModel = viewModel(parentEntry)
+    // SharedViewModel: 액티비티 범위에서 선택된 스케줄 정보 공유
     val sharedScheduleViewModel: SharedScheduleViewModel = viewModel(
         LocalActivity.current as ComponentActivity
     )
+
+    // 선택된 스케줄 (ScheduleTitle)
     val selectedSchedule by sharedScheduleViewModel.selectedSchedule.collectAsState()
+
+    // 개별 스케줄 관련 데이터 관리용 ViewModel
     val scheduleViewModel: ScheduleViewModel = viewModel()
+
+    // 스케줄 제목 리스트를 상태로 구독
     val scheduleTitles by scheduleViewModel.scheduleTitles.collectAsState()
 
+    // 모든 스케줄 데이터를 상태로 구독
     val schedules by scheduleViewModel.schedules.collectAsState()
-//    val savedStateHandle = navBackStackEntry.savedStateHandle
-//    val selectedScheduleAny = savedStateHandle?.get<Any>("selectedSchedule")
-//    val selectedSchedule = selectedScheduleAny as? ScheduleTitle
-    var viewedSchedule by remember { mutableStateOf<ScheduleData?>(null)}
 
+    // 현재 Pager에서 보고 있는 상세 스케줄 상태 저장
+    var viewedSchedule by remember { mutableStateOf<ScheduleData?>(null) }
+
+    // 화면 최초 진입 시 스케줄 제목 목록을 Firestore에서 불러옴
     LaunchedEffect(Unit) {
         scheduleViewModel.loadScheduleTitles()
     }
 
-    // 선택된 스케줄이 바뀔 때마다 세부 일정 불러오기
+    // 선택된 스케줄이 변경되면 해당 스케줄의 세부 일정 데이터를 Firestore에서 불러옴
     LaunchedEffect(selectedSchedule?.id) {
         selectedSchedule?.let {
             scheduleViewModel.loadScheduleDetails(it.id)
         }
     }
 
-    // 디버그용 로그 출력
+    // 스케줄 제목 리스트를 디버그 로그로 출력
     LaunchedEffect(scheduleTitles) {
         scheduleTitles.forEach { title ->
             Log.d("DebugScheduleTitle", "Title: ${title.title}")
         }
     }
 
+    // 상세 일정 리스트 상태 구독
     val scheduleDetails by scheduleViewModel.scheduleDetails.collectAsState()
 
     Column(
@@ -111,15 +88,7 @@ fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-//        if (selectedSchedule != null) {
-//            Text("선택된 스케줄 정보", style = MaterialTheme.typography.titleLarge)
-//            Text("제목: ${selectedSchedule.title}")
-//            Text("장소: ${selectedSchedule.location}")
-//            Text("시작일: ${selectedSchedule.startDate}")
-//            Text("종료일: ${selectedSchedule.endDate}")
-//        } else {
-//            Text("선택된 스케줄이 없습니다.")
-//        }
+        // 선택된 스케줄 기본 정보 표시 (제목, 장소, 시작일, 종료일)
         selectedSchedule?.let { schedule ->
             Text("선택된 스케줄 정보", style = MaterialTheme.typography.titleLarge)
             Text("제목: ${schedule.title}")
@@ -127,8 +96,11 @@ fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
             Text("시작일: ${schedule.startDate}")
             Text("종료일: ${schedule.endDate}")
         } ?: run {
+            // 선택된 스케줄이 없을 경우 안내 메시지 표시
             Text("선택된 스케줄이 없습니다.")
         }
+
+        // 스케줄 목록 헤더와 '추가하기' 버튼 배치
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -136,6 +108,7 @@ fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
             Text("저장된 일정 목록", style = MaterialTheme.typography.titleMedium)
             Button(onClick = {
                 if (selectedSchedule != null) {
+                    // '추가하기' 버튼 클릭 시 상세 추가 화면으로 이동
                     navController.navigate(Routes.AddDetails.createRoute(cityDocId))
                 }
             }) {
@@ -145,26 +118,25 @@ fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // 저장된 스케줄 세부 목록을 LazyColumn 안에 배치
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
             item {
-                SchedulePager(schedules = scheduleDetails,
+                // 스케줄 카드들을 가로 슬라이드 뷰 (Pager) 형태로 보여줌
+                SchedulePager(
+                    schedules = scheduleDetails,
                     onScheduleClick = { selectedScheduleData ->
+                        // 스케줄 카드 클릭 시 해당 일정의 상세 화면으로 이동
                         val scheduleTitle = scheduleTitles.find { it.id == selectedSchedule?.id }
                         if (scheduleTitle != null) {
-//                            sharedScheduleViewModel.setSchedule(scheduleTitle)
                             navController.currentBackStackEntry?.savedStateHandle?.set("selectedSchedule", selectedScheduleData)
                             navController.navigate(Routes.InfoCard.createRoute(cityDocId))
                         } else {
                             Toast.makeText(context, "해당 일정의 전체 데이터를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
                             Log.w("InventoryScheduleTest", "Can't find ScheduleTitle for ScheduleData id: ${selectedScheduleData.id}")
                         }
-//                        selected ->
-////                        val backStackEntry = navController.getBackStackEntry(Routes.InventSchedule.route)
-////                        backStackEntry.savedStateHandle["selectedSchedule"] = selected
-//                        sharedScheduleViewModel.setSchedule(selected)
-//                        navController.navigate(Routes.InfoCard.createRoute(cityDocId))
                     },
                     onScheduleView = { viewed ->
+                        // Pager 페이지 변경 시 viewedSchedule 상태 갱신
                         viewedSchedule = viewed
                     }
                 )
@@ -173,20 +145,24 @@ fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
                 Spacer(modifier = Modifier.height(8.dp))
             }
             item {
+                // 현재 선택된 스케줄 위치를 지도 대신 텍스트로 간단 표시
                 viewedSchedule?.let {
                     Text("지도 for ${viewedSchedule?.location}")
-                    //viewdSchedule 받아서 지도에 점 출력
                 } ?: Text("아직 선택된 일정이 없습니다.")
             }
         }
     }
 }
 
+/**
+ * 단일 스케줄 정보를 카드 형태로 보여주는 Composable
+ *
+ * @param schedule 표시할 스케줄 데이터
+ */
 @Composable
 fun ScheduleCard(schedule: ScheduleData) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -197,15 +173,24 @@ fun ScheduleCard(schedule: ScheduleData) {
     }
 }
 
+/**
+ * 스케줄 리스트를 가로 슬라이드 뷰 (Pager)로 보여주는 Composable
+ *
+ * @param schedules 보여줄 스케줄 리스트
+ * @param onScheduleClick 스케줄 카드 클릭 시 호출되는 콜백
+ * @param onScheduleView 현재 보고 있는 스케줄 변경 시 호출되는 콜백
+ */
 @Composable
 fun SchedulePager(
     schedules: List<ScheduleData>,
     onScheduleClick: (ScheduleData) -> Unit,
     onScheduleView: (ScheduleData) -> Unit
 ) {
-    val pagerState = rememberPagerState(pageCount = {schedules.size})
+    // Pager 상태 생성, 총 페이지 수는 스케줄 수에 맞춤
+    val pagerState = rememberPagerState(pageCount = { schedules.size })
     val coroutineScope = rememberCoroutineScope()
 
+    // Pager 페이지 변경 시 현재 보고 있는 스케줄 상태 갱신
     LaunchedEffect(pagerState.currentPage) {
         if (pagerState.currentPage in schedules.indices) {
             onScheduleView(schedules[pagerState.currentPage])
@@ -216,7 +201,7 @@ fun SchedulePager(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        // ◀️ 왼쪽/오른쪽 ▶️ 끝으로 가기 버튼
+        // 좌우 끝 페이지로 즉시 이동하는 버튼 배치
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
@@ -227,7 +212,7 @@ fun SchedulePager(
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        pagerState.scrollToPage(0)
+                        pagerState.scrollToPage(0) // 첫 페이지로 이동
                     }
                 },
                 enabled = schedules.isNotEmpty() && pagerState.currentPage != 0
@@ -238,7 +223,7 @@ fun SchedulePager(
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        pagerState.scrollToPage(schedules.lastIndex)
+                        pagerState.scrollToPage(schedules.lastIndex) // 마지막 페이지로 이동
                     }
                 },
                 enabled = schedules.isNotEmpty() && pagerState.currentPage != schedules.lastIndex
@@ -249,6 +234,7 @@ fun SchedulePager(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // HorizontalPager로 스케줄 카드들을 가로 슬라이드 뷰로 보여줌
         HorizontalPager(
             state = pagerState,
             contentPadding = PaddingValues(horizontal = 64.dp),
@@ -257,6 +243,7 @@ fun SchedulePager(
         ) { page ->
             val currentPage = pagerState.currentPage
             val pageOffset = (currentPage - page).absoluteValue
+            // 현재 페이지에 가까울수록 크기 확대 효과를 줌 (scale)
             val scale = 1f - (0.15f * pageOffset.coerceAtMost(1))
 
             Box(
@@ -267,6 +254,7 @@ fun SchedulePager(
                         scaleY = scale
                     }
                     .clickable {
+                        // 스케줄 카드 클릭 시 콜백 호출
                         onScheduleClick(schedules[page])
                     }
                     .fillMaxWidth()
@@ -276,6 +264,4 @@ fun SchedulePager(
             }
         }
     }
-
-
 }
