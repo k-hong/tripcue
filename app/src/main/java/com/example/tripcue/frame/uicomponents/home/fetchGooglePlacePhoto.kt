@@ -18,11 +18,11 @@ suspend fun fetchGooglePlacePhoto(placeName: String, context: Context): ImageBit
     val TAG = "GooglePlaceDebug"
 
     if (!Places.isInitialized()) {
-        Log.e(TAG, "❌ Places API not initialized.")
+        Log.e(TAG, " Places API not initialized.")
         return null
     }
 
-    Log.d(TAG, "🔍 Searching for place: $placeName")
+    Log.d(TAG, " Searching for place: $placeName")
 
     val placesClient = Places.createClient(context)
 
@@ -35,7 +35,7 @@ suspend fun fetchGooglePlacePhoto(placeName: String, context: Context): ImageBit
             .addOnSuccessListener { response ->
                 val prediction = response.autocompletePredictions.firstOrNull()
                 if (prediction == null) {
-                    Log.w(TAG, "⚠️ No autocomplete prediction found.")
+                    Log.w(TAG, "⚠ No autocomplete prediction found.")
                     continuation.resume(null)
                     return@addOnSuccessListener
                 }
@@ -48,12 +48,12 @@ suspend fun fetchGooglePlacePhoto(placeName: String, context: Context): ImageBit
                     .addOnSuccessListener { placeResponse ->
                         val metadata = placeResponse.place.photoMetadatas?.firstOrNull()
                         if (metadata == null) {
-                            Log.w(TAG, "📭 No photo metadata found.")
+                            Log.w(TAG, " No photo metadata found.")
                             continuation.resume(null)
                             return@addOnSuccessListener
                         }
 
-                        Log.d(TAG, "🖼 Found photo metadata, fetching photo...")
+                        Log.d(TAG, " Found photo metadata, fetching photo...")
 
                         val photoRequest = FetchPhotoRequest.builder(metadata)
                             .setMaxWidth(800)
@@ -64,25 +64,25 @@ suspend fun fetchGooglePlacePhoto(placeName: String, context: Context): ImageBit
                             .addOnSuccessListener { photoResponse ->
                                 val bitmap: Bitmap? = photoResponse.bitmap
                                 if (bitmap != null) {
-                                    Log.d(TAG, "✅ Bitmap loaded successfully.")
+                                    Log.d(TAG, " Bitmap loaded successfully.")
                                     continuation.resume(bitmap.asImageBitmap())
                                 } else {
-                                    Log.e(TAG, "❌ Bitmap was null.")
+                                    Log.e(TAG, " Bitmap was null.")
                                     continuation.resume(null)
                                 }
                             }
                             .addOnFailureListener { e ->
-                                Log.e(TAG, "❌ Failed to fetch photo: ${e.message}", e)
+                                Log.e(TAG, " Failed to fetch photo: ${e.message}", e)
                                 continuation.resume(null)
                             }
                     }
                     .addOnFailureListener { e ->
-                        Log.e(TAG, "❌ Failed to fetch place: ${e.message}", e)
+                        Log.e(TAG, " Failed to fetch place: ${e.message}", e)
                         continuation.resume(null)
                     }
             }
             .addOnFailureListener { e ->
-                Log.e(TAG, "❌ Autocomplete failed: ${e.message}", e)
+                Log.e(TAG, " Autocomplete failed: ${e.message}", e)
                 continuation.resume(null)
             }
     }
