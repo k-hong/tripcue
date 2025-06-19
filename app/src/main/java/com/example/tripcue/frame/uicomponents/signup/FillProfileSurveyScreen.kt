@@ -33,7 +33,7 @@ fun FillProfileSurveyScreen(navController: NavController) {
     var selectedTags by remember { mutableStateOf(listOf<String>()) }
 
     val interestOptions = listOf(
-        "느긋한", "관광지", "식도락", "사진", "쇼핑", "휴양",
+        "느긋한", "관광지", "식당", "사진", "쇼핑", "휴양",
         "모험", "자연", "역사", "전통", "문화", "야경"
     )
 

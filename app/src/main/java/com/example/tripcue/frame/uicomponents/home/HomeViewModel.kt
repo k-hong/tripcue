@@ -42,20 +42,20 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 val interests = userDoc.get("interests") as? List<String> ?: emptyList()
 
                 // [로그 유지] Firestore에서 가져온 데이터를 기록하는 로그
-                Log.d(TAG, "👤 Firestore 데이터: region=$region, interests=$interests")
+                Log.d(TAG, " Firestore 데이터: region=$region, interests=$interests")
 
                 if (interests.isNotEmpty()) {
                     val places = placeRepository.getRecommendedPlaces(region, interests)
                     uiState = HomeUiState.Success(places, nickname)
                     // [로그 유지] 최종 성공 결과를 기록하는 로그
-                    Log.d(TAG, "✅ 추천 장소 (${places.size}개): $places")
+                    Log.d(TAG, "추천 장소 (${places.size}개): $places")
                 } else {
                     uiState = HomeUiState.Success(emptyList(), nickname)
                 }
             } catch (e: Exception) {
 
                 // [로그 유지] 실패 원인을 기록하는 로그
-                Log.e(TAG, "❌ 추천 장소 가져오기 실패", e)
+                Log.e(TAG, "추천 장소 가져오기 실패", e)
                 val errorMessage = if (e.message?.contains("naveropenapi") == true) {
                     "지역 정보를 가져오는데 실패했어요. API 키를 확인해주세요."
                 } else {

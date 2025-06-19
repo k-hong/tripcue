@@ -112,7 +112,7 @@ object NaverPlaceApi {
                         koreanType = null,
                         description = obj["roadAddress"]?.asString?.ifBlank { obj["address"]?.asString } ?: "주소 정보 없음",
                         category = obj["category"]?.asString ?: "기타",
-                        thumbnailUrl = "HAS_PHOTO",
+                        thumbnailUrl ="HAS_PHOTO",
                         latitude = obj["mapy"]?.asString?.toDoubleOrNull()?.div(10_000_000) ?: 0.0,
                         longitude = obj["mapx"]?.asString?.toDoubleOrNull()?.div(10_000_000) ?: 0.0,
                         searchKeyword = keyword,
@@ -123,7 +123,7 @@ object NaverPlaceApi {
                 emptyList()
             }
         } catch (e: Exception) {
-            Log.e(TAG, "❌ 네이버 API 실패", e)
+            Log.e(TAG, " 네이버 API 실패", e)
             emptyList()
         }
     }

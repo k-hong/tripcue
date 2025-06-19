@@ -4,7 +4,6 @@ import com.google.android.libraries.places.api.model.Place
 
 object PlaceTypeConverter {
 
-    // 주요 장소 유형을 한국어로 미리 정의해 둡니다.
     private val typeMap = mapOf(
         Place.Type.SHOPPING_MALL to "쇼핑몰",
         Place.Type.RESTAURANT to "음식점",
@@ -22,7 +21,7 @@ object PlaceTypeConverter {
         Place.Type.CLOTHING_STORE to "옷 가게",
         Place.Type.DEPARTMENT_STORE to "백화점",
         Place.Type.ELECTRONICS_STORE to "전자제품점",
-        Place.Type.POINT_OF_INTEREST to "관심 장소" // 가장 일반적인 유형
+        Place.Type.POINT_OF_INTEREST to "관심 장소"
     )
 
     // 더 구체적인 유형에 우선순위를 부여하기 위한 리스트
@@ -32,9 +31,7 @@ object PlaceTypeConverter {
         Place.Type.DEPARTMENT_STORE, Place.Type.ART_GALLERY
     )
 
-    /**
-     * 장소의 유형(types) 리스트를 받아 가장 적절한 한국어 유형을 반환합니다.
-     */
+
     fun getKoreanType(types: List<Place.Type>?): String? {
         if (types.isNullOrEmpty()) return null
 
