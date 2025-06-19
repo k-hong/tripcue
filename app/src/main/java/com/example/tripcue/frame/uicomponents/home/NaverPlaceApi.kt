@@ -30,7 +30,12 @@ object NaverPlaceApi {
 
     private val client = OkHttpClient()
     private const val TAG = "NaverPlaceApi"
-
+    private fun isValidPlace(title: String): Boolean {
+        if (title.isBlank()) return false
+        val lowerTitle = title.lowercase()
+        val corporateKeywords = listOf("(주)", "주식회사", "마케팅", "플랫폼", "센터", "솔루션")
+        return corporateKeywords.none { lowerTitle.contains(it) }
+    }
     suspend fun advancedSearchPlaces(
         context: Context, // [추가] 구글 API 사용을 위해 Context 필요
         region: String,
@@ -39,6 +44,8 @@ object NaverPlaceApi {
     ): List<PlaceInfo> = withContext(Dispatchers.IO) {
         val results = mutableListOf<PlaceInfo>()
         val seenTitles = mutableSetOf<String>()
+        val seenCoreNames = mutableSetOf<String>()
+        val lowerCaseRegion = region.lowercase()
 
         val perKeywordLimit = when (interests.size) {
             1 -> 15
@@ -46,38 +53,77 @@ object NaverPlaceApi {
             3 -> 7
             else -> 5
         }
-
-        // 1. 관심사 키워드로 검색
+// 1. 관심사 키워드로 검색
         for (keyword in interests) {
             if (results.size >= totalLimit) break
             val query = "$region $keyword 장소"
-            val places = searchNaverLocal(context, query, "comment", keyword) // context 전달
-            for (place in places.take(perKeywordLimit)) {
+            // 네이버 API에서 제공하는 최대치(display=15)의 후보군을 가져옵니다.
+            val places = searchNaverLocal(context, query, "comment", keyword)
+
+            // [수정] 필터링 로직 강화
+            for (place in places) {
                 if (results.size >= totalLimit) break
-                if (seenTitles.add(place.title)) {
-                    results.add(place)
+
+                val originalTitle = place.title
+                val lowerCaseTitle = originalTitle.lowercase()
+
+                // --- GooglePlaceApi와 동일한 필터링 적용 ---
+                // 필터 1: 전체 이름이 완전히 동일한 장소 제외
+                if (!seenTitles.add(originalTitle)) continue
+
+                // 필터 2: 장소 이름에 검색 지역명이 포함된 경우 제외 (예: '서울' 검색 시 '서울식당' 제외)
+                if (lowerCaseRegion in lowerCaseTitle) continue
+
+                // 필터 3: 장소 이름의 첫 단어가 중복인 경우 제외 (핵심 이름 중복 방지)
+                val coreName = originalTitle.split(" ").firstOrNull() ?: originalTitle
+                if (seenCoreNames.contains(coreName)) continue
+
+                // 필터 4: 유효하지 않은 장소(회사, 솔루션 등) 제외
+                if (!isValidPlace(originalTitle)) continue
+                val imageBitmap = fetchGooglePlacePhoto(place.title, context)
+                if (imageBitmap == null) {
+                    Log.w(TAG, "Google Place에서 '${place.title}'의 사진을 찾지 못해 목록에서 제외합니다.")
+                    continue // 사진이 없으면 다음 후보로 넘어감
                 }
+
+                results.add(place)
+                seenCoreNames.add(coreName) // 중복 체크를 위해 추가
             }
         }
 
         // 2. 예비 검색
         if (results.size < totalLimit) {
-            val fallbackQueries = listOf("$region 여행","$region 맛집", "$region 명소")
+            val fallbackQueries = listOf("$region 여행", "$region 맛집", "$region 명소")
             for (query in fallbackQueries) {
                 if (results.size >= totalLimit) break
                 val places = searchNaverLocal(context, query, "comment", "추천")
+
+                // [수정] 예비 검색에도 동일한 필터링 로직 적용
                 for (place in places) {
                     if (results.size >= totalLimit) break
-                    if (seenTitles.add(place.title)) {
-                        results.add(place)
+
+                    val originalTitle = place.title
+                    val lowerCaseTitle = originalTitle.lowercase()
+
+                    if (!seenTitles.add(originalTitle)) continue
+                    if (lowerCaseRegion in lowerCaseTitle) continue
+
+                    val coreName = originalTitle.split(" ").firstOrNull() ?: originalTitle
+                    if (seenCoreNames.contains(coreName)) continue
+
+                    if (!isValidPlace(originalTitle)) continue
+                    val imageBitmap = fetchGooglePlacePhoto(place.title, context)
+                    if (imageBitmap == null) {
+                        continue
                     }
+                    results.add(place)
+                    seenCoreNames.add(coreName)
                 }
             }
         }
 
         return@withContext results
     }
-
     private fun searchNaverLocal(
         context: Context,
         query: String,
