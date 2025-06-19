@@ -61,11 +61,12 @@ fun MainScreen2(navController: NavHostController) {
         drawerContent = {
             ModalDrawerSheet {
                 DrawerContent(
+                    navController = navController,
                     isEditMode = isEditMode,
                     onEditClick = { isEditMode = true },
                     onDoneClick = {
                         isEditMode = false
-                        refreshTrigger = true // ✅ 저장 시 새로고침 트리거
+                        refreshTrigger = true
                     }
                 )
             }

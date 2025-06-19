@@ -19,14 +19,20 @@ import com.example.tripcue.frame.uicomponents.signup.FillProfileScreen
 import com.example.tripcue.frame.uicomponents.signup.FillProfileSurveyScreen
 import com.example.tripcue.frame.uicomponents.signup.LoginScreen
 import com.example.tripcue.frame.uicomponents.signup.SignUpScreen
+import com.google.firebase.auth.FirebaseAuth
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
 @Composable
 fun NavGraph(navController: NavHostController) {
+    val startDestination = if (FirebaseAuth.getInstance().currentUser != null) {
+        Routes.Home.route
+    } else {
+        Routes.Login.route
+    }
     NavHost(
         navController = navController,
-        startDestination = Routes.Login.route
+        startDestination = startDestination
     ) {
         // 로그인 전
         composable(Routes.Login.route) {

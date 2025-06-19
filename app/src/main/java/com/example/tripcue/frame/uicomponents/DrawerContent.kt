@@ -14,9 +14,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,13 +35,18 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.tripcue.R
+import com.example.tripcue.frame.model.Routes
+import com.example.tripcue.frame.viewmodel.AuthViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun ColumnScope.DrawerContent(
+    navController: NavController,
     isEditMode: Boolean,
     onEditClick: () -> Unit,
     onDoneClick: () -> Unit
@@ -47,6 +54,7 @@ fun ColumnScope.DrawerContent(
     val user = FirebaseAuth.getInstance().currentUser
     val db = FirebaseFirestore.getInstance()
     val context = LocalContext.current
+    val authViewModel: AuthViewModel = viewModel()
 
     var nickname by remember { mutableStateOf("username") }
     var selectedTags by remember { mutableStateOf(listOf<String>()) }
@@ -187,6 +195,25 @@ fun ColumnScope.DrawerContent(
     }
 
     Spacer(modifier = Modifier.height(16.dp))
-
+    Spacer(modifier = Modifier.weight(1f)) // 버튼을 하단에 위치시키기 위한 Spacer
+    Divider(modifier = Modifier.padding(vertical = 8.dp)) // 구분선
+    Button(
+        onClick = {
+            authViewModel.signOut()
+            navController.navigate(Routes.Login.route) {
+                // 백스택을 모두 지우고 로그인 화면으로 이동
+                popUpTo(navController.graph.startDestinationId) {
+                    inclusive = true
+                }
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Icon(imageVector = Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "로그아웃")
+        Spacer(modifier = Modifier.width(8.dp))
+        Text("로그아웃")
+    }
 
 }
