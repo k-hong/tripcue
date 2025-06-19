@@ -53,9 +53,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     uiState = HomeUiState.Success(emptyList(), nickname)
                 }
             } catch (e: Exception) {
+
                 // [로그 유지] 실패 원인을 기록하는 로그
                 Log.e(TAG, "❌ 추천 장소 가져오기 실패", e)
-                uiState = HomeUiState.Error("데이터를 불러오는데 실패했습니다.")
+                val errorMessage = if (e.message?.contains("naveropenapi") == true) {
+                    "지역 정보를 가져오는데 실패했어요. API 키를 확인해주세요."
+                } else {
+                    "데이터를 불러오는데 실패했습니다."
+                }
+                uiState = HomeUiState.Error(errorMessage)
             }
         }
     }

@@ -172,6 +172,7 @@ object NaverPlaceApi {
             }
         } catch(e: Exception) {
             Log.e(TAG, "네이버 지오코딩 실패", e)
+            throw e
         }
         return@withContext null
     }

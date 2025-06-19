@@ -1,15 +1,11 @@
 package com.example.tripcue.frame.uicomponents
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
@@ -29,21 +25,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
-import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.tripcue.frame.model.Routes
-import com.example.tripcue.frame.navigation.BottomNavigationBar
-import com.example.tripcue.frame.uicomponents.home.Home
-import kotlinx.coroutines.launch
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.tripcue.frame.model.Routes
+import com.example.tripcue.frame.navigation.BottomNavigationBar
 import com.example.tripcue.frame.uicomponents.Schedule.AddScheduleTest
 import com.example.tripcue.frame.uicomponents.Schedule.InfoCardScreen
 import com.example.tripcue.frame.uicomponents.Schedule.InventoryScheduleTest
-import com.example.tripcue.frame.uicomponents.home.MapScreen
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
+import com.example.tripcue.frame.uicomponents.home.Home
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -168,10 +161,10 @@ fun MainScreen2(navController: NavHostController) {
                 }
             }
 
-            when (currentRoute) {
-               // Routes.Home -> Home(navController, refreshTrigger = refreshTrigger)
-                else -> Text("페이지를 찾을 수 없습니다")
-            }
+//            when (currentRoute) {
+//               // Routes.Home -> Home(navController, refreshTrigger = refreshTrigger)
+//                else -> Text("페이지를 찾을 수 없습니다")
+//            }
             // ✅ 트리거 사용 후 초기화
             if (refreshTrigger) {
                 LaunchedEffect(Unit) {
