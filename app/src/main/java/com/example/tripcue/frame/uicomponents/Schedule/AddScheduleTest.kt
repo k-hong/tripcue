@@ -1,11 +1,9 @@
 package com.example.tripcue.frame.uicomponents.Schedule
 
-import android.R.attr.minDate
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,12 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -28,31 +23,20 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
-import com.example.tripcue.TripcueApplication
 import com.example.tripcue.frame.model.PlaceResult
 import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.model.ScheduleData
-import com.example.tripcue.frame.model.ScheduleTitle
 import com.example.tripcue.frame.model.Transportation
-import com.example.tripcue.frame.model.WeatherInfo
-import com.example.tripcue.frame.uicomponents.fetchPlaceAutocomplete
 import com.example.tripcue.frame.uicomponents.getApiKeyFromManifest
 import com.example.tripcue.frame.viewmodel.ScheduleViewModel
 import com.example.tripcue.frame.viewmodel.SharedScheduleViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -282,46 +266,30 @@ fun AddScheduleTest(
             }
 
             // "등록하기" 버튼 - 스케줄 및 타이틀 저장 후 이동
+            // "등록하기" 버튼
             Button(
                 onClick = {
-                    val scheduleId = UUID.randomUUID().toString()
-                    val finalLocation = if (location.isNotEmpty()) location else locationQuery
-
-                    // 스케줄 데이터 생성
                     val newSchedule = ScheduleData(
-                        id = scheduleId,
-                        location = finalLocation,
+                        id = UUID.randomUUID().toString(),
+                        location = location, // 텍스트만 저장
                         date = selectedDate.toString(),
                         transportation = transportation,
-                        weather = null, // 날씨 정보는 아직 없음
                         details = details,
-                        latitude = selectedLatLng?.first,
-                        longitude = selectedLatLng?.second
+                        latitude = null, // 좌표는 저장하지 않음
+                        longitude = null // 좌표는 저장하지 않음
                     )
 
-                    // Firestore에 저장
                     scheduleViewModel.addSchedule(newSchedule, cityDocId)
 
-                    // 스케줄 타이틀 생성 및 공유 ViewModel에 저장
-//                    val scheduleTitle = ScheduleTitle(
-//                        id = cityDocId,
-//                        title = finalLocation,
-//                        location = finalLocation,
-//                        startDate = selectedDate.toString(),
-//                        endDate = selectedDate.toString()
-//                    )
-//                    sharedScheduleViewModel.setScheduleTitle(scheduleTitle)
-
-                    // 일정 목록 화면으로 이동
                     navController.navigate(Routes.InventSchedule.createRoute(cityDocId)) {
-                        popUpTo(Routes.AddDetails.route) { inclusive = true } // 현재 화면 제거
+                        popUpTo(Routes.AddDetails.route) { inclusive = true }
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = location.isNotBlank()
             ) {
                 Text("등록하기")
             }
-
             Spacer(modifier = Modifier.height(8.dp))
 
             // "닫기" 버튼 - 화면 이동만 수행
