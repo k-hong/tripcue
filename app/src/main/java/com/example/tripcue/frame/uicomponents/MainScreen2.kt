@@ -35,6 +35,7 @@ import com.example.tripcue.frame.navigation.BottomNavigationBar
 import com.example.tripcue.frame.uicomponents.Schedule.AddScheduleTest
 import com.example.tripcue.frame.uicomponents.Schedule.InfoCardScreen
 import com.example.tripcue.frame.uicomponents.Schedule.InventoryScheduleTest
+import com.example.tripcue.frame.uicomponents.Schedule.MySchedulesMapScreen
 import com.example.tripcue.frame.uicomponents.home.Home
 import kotlinx.coroutines.launch
 
@@ -156,6 +157,14 @@ fun MainScreen2(navController: NavHostController) {
 
                     composable("edit_profile") {
                         EditProfileScreen(navController)
+                    }
+
+                    composable(
+                        route = Routes.MySchedulesMap.route,
+                        arguments = listOf(navArgument("cityDocId") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val cityDocId = backStackEntry.arguments?.getString("cityDocId") ?: ""
+                        MySchedulesMapScreen(navController = navControllerForMain, cityDocId = cityDocId)
                     }
 
 
