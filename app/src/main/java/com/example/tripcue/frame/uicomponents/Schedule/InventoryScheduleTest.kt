@@ -1,15 +1,21 @@
 package com.example.tripcue.frame.uicomponents.Schedule
 
 // 필요한 Android 및 Compose 관련 라이브러리 임포트
+import android.R.attr.onClick
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +29,7 @@ import com.example.tripcue.frame.model.Routes
 import com.example.tripcue.frame.model.ScheduleData
 import com.example.tripcue.frame.viewmodel.ScheduleViewModel
 import com.example.tripcue.frame.viewmodel.SharedScheduleViewModel
+import com.google.common.math.LinearTransformation.vertical
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 
@@ -47,7 +54,7 @@ fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
     )
 
     // 선택된 스케줄 (ScheduleTitle)
-    val selectedSchedule by sharedScheduleViewModel.selectedSchedule.collectAsState()
+    val selectedSchedule by sharedScheduleViewModel.selectedScheduleTitle.collectAsState()
 
     // 개별 스케줄 관련 데이터 관리용 ViewModel
     val scheduleViewModel: ScheduleViewModel = viewModel()
@@ -119,24 +126,19 @@ fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
         Spacer(modifier = Modifier.height(8.dp))
 
         // 저장된 스케줄 세부 목록을 LazyColumn 안에 배치
-        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+        LazyColumn(modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+        ) {
             item {
                 // 스케줄 카드들을 가로 슬라이드 뷰 (Pager) 형태로 보여줌
-                SchedulePager(
-                    schedules = scheduleDetails,
+                DateGroupedSchedule(
+                    scheduleDetails = scheduleDetails,
                     onScheduleClick = { selectedScheduleData ->
-                        // 스케줄 카드 클릭 시 해당 일정의 상세 화면으로 이동
-                        val scheduleTitle = scheduleTitles.find { it.id == selectedSchedule?.id }
-                        if (scheduleTitle != null) {
-                            navController.currentBackStackEntry?.savedStateHandle?.set("selectedSchedule", selectedScheduleData)
-                            navController.navigate(Routes.InfoCard.createRoute(cityDocId))
-                        } else {
-                            Toast.makeText(context, "해당 일정의 전체 데이터를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
-                            Log.w("InventoryScheduleTest", "Can't find ScheduleTitle for ScheduleData id: ${selectedScheduleData.id}")
-                        }
+                        sharedScheduleViewModel.setScheduleData(selectedScheduleData)
+                        navController.navigate(Routes.InfoCard.createRoute(cityDocId))
                     },
                     onScheduleView = { viewed ->
-                        // Pager 페이지 변경 시 viewedSchedule 상태 갱신
                         viewedSchedule = viewed
                     }
                 )
@@ -160,9 +162,16 @@ fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
  * @param schedule 표시할 스케줄 데이터
  */
 @Composable
-fun ScheduleCard(schedule: ScheduleData) {
+fun ScheduleCard(
+    schedule: ScheduleData,
+    onClick: (() -> Unit)? = null
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = onClick != null) {
+                onClick?.invoke()
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -180,88 +189,67 @@ fun ScheduleCard(schedule: ScheduleData) {
  * @param onScheduleClick 스케줄 카드 클릭 시 호출되는 콜백
  * @param onScheduleView 현재 보고 있는 스케줄 변경 시 호출되는 콜백
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SchedulePager(
-    schedules: List<ScheduleData>,
+fun DateGroupedSchedule(
+    scheduleDetails: List<ScheduleData>,
     onScheduleClick: (ScheduleData) -> Unit,
     onScheduleView: (ScheduleData) -> Unit
 ) {
-    // Pager 상태 생성, 총 페이지 수는 스케줄 수에 맞춤
-    val pagerState = rememberPagerState(pageCount = { schedules.size })
-    val coroutineScope = rememberCoroutineScope()
+    val groupedByDate = scheduleDetails.groupBy { it.date }.toSortedMap()
 
-    // Pager 페이지 변경 시 현재 보고 있는 스케줄 상태 갱신
-    LaunchedEffect(pagerState.currentPage) {
-        if (pagerState.currentPage in schedules.indices) {
-            onScheduleView(schedules[pagerState.currentPage])
-        }
+    if (groupedByDate.isEmpty()) {
+        Text("표시할 일정이 없습니다.", modifier = Modifier.padding(16.dp))
+        return
     }
 
+    // LazyColumn 대신 그냥 각 날짜마다 HorizontalPager를 렌더링하는 아이템 목록만 리턴하는 컴포저블로 변경
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 좌우 끝 페이지로 즉시 이동하는 버튼 배치
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 32.dp)
-        ) {
-            Button(
-                onClick = {
-                    coroutineScope.launch {
-                        pagerState.scrollToPage(0) // 첫 페이지로 이동
-                    }
-                },
-                enabled = schedules.isNotEmpty() && pagerState.currentPage != 0
-            ) {
-                Text("◀ 제일 왼쪽")
-            }
-
-            Button(
-                onClick = {
-                    coroutineScope.launch {
-                        pagerState.scrollToPage(schedules.lastIndex) // 마지막 페이지로 이동
-                    }
-                },
-                enabled = schedules.isNotEmpty() && pagerState.currentPage != schedules.lastIndex
-            ) {
-                Text("제일 오른쪽 ▶")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // HorizontalPager로 스케줄 카드들을 가로 슬라이드 뷰로 보여줌
-        HorizontalPager(
-            state = pagerState,
-            contentPadding = PaddingValues(horizontal = 64.dp),
-            pageSpacing = 16.dp,
-            modifier = Modifier.fillMaxWidth()
-        ) { page ->
-            val currentPage = pagerState.currentPage
-            val pageOffset = (currentPage - page).absoluteValue
-            // 현재 페이지에 가까울수록 크기 확대 효과를 줌 (scale)
-            val scale = 1f - (0.15f * pageOffset.coerceAtMost(1))
-
-            Box(
-                contentAlignment = Alignment.Center,
+        groupedByDate.forEach { (date, tasksForDate) ->
+            Column(
                 modifier = Modifier
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                    }
-                    .clickable {
-                        // 스케줄 카드 클릭 시 콜백 호출
-                        onScheduleClick(schedules[page])
-                    }
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp)
+                    .padding(vertical = 8.dp)
             ) {
-                ScheduleCard(schedule = schedules[page])
+                Text(
+                    text = "📅 $date 일정 (${tasksForDate.size}개)",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+
+                val pagerState = rememberPagerState(pageCount = { tasksForDate.size })
+
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(250.dp),
+                    contentPadding = PaddingValues(horizontal = 32.dp),
+                    pageSpacing = 16.dp
+                ) { pageIndex ->
+                    val schedule = tasksForDate[pageIndex]
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                            .clickable { onScheduleClick(schedule) }
+                    ) {
+                        ScheduleCard(schedule = schedule)
+                    }
+                    LaunchedEffect(pageIndex) {
+                        onScheduleView(schedule)
+                    }
+                }
+
+                Text(
+                    text = "일정 ${pagerState.currentPage + 1} / ${tasksForDate.size}",
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
             }
         }
     }
 }
+

@@ -127,7 +127,7 @@ fun AddScheduleTest(
     val sharedScheduleViewModel: SharedScheduleViewModel = viewModel(
         LocalActivity.current as ComponentActivity
     )
-    val selectedSchedule by sharedScheduleViewModel.selectedSchedule.collectAsState()
+    val selectedSchedule by sharedScheduleViewModel.selectedScheduleTitle.collectAsState()
 
     // 입력 상태 저장 변수들
     var location by remember { mutableStateOf("") }
@@ -310,7 +310,7 @@ fun AddScheduleTest(
                         startDate = selectedDate.toString(),
                         endDate = selectedDate.toString()
                     )
-                    sharedScheduleViewModel.setSchedule(scheduleTitle)
+                    sharedScheduleViewModel.setScheduleTitle(scheduleTitle)
 
                     // 일정 목록 화면으로 이동
                     navController.navigate(Routes.InventSchedule.createRoute(cityDocId)) {

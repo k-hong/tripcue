@@ -178,14 +178,15 @@ fun InfoCardScreen(
     cityDocId: String
 ) {
     val context = LocalContext.current
-    val activity = LocalActivity.current as ComponentActivity
     val weatherViewModel: WeatherViewModel = viewModel()
     val scheduleViewModel: ScheduleViewModel = viewModel()
 
     // 이전 화면에서 전달된 ScheduleData (selectedSchedule)
-    val selectedSchedule = navController.previousBackStackEntry
-        ?.savedStateHandle
-        ?.get<ScheduleData>("selectedSchedule")
+    val sharedScheduleViewModel: SharedScheduleViewModel = viewModel(
+        LocalActivity.current as ComponentActivity
+    )
+    val selectedSchedule by sharedScheduleViewModel.selectedScheduleData.collectAsState()
+    val schedule = selectedSchedule ?: return
 
     if (selectedSchedule == null) {
         Text("선택된 일정이 없습니다.")
@@ -193,7 +194,7 @@ fun InfoCardScreen(
     }
 
     // 초기값 세팅
-    val initialSchedule = selectedSchedule
+    val initialSchedule = selectedSchedule!!
     var isEditing by remember { mutableStateOf(false) }
 
     var location by remember { mutableStateOf(initialSchedule.location) }
@@ -245,6 +246,22 @@ fun InfoCardScreen(
         weatherViewModel.fetchWeatherForDateAndLocation(date, nx, ny)
     }
 
+    // selectedSchedule이 바뀔 때마다 상태 변수 초기화
+    LaunchedEffect(selectedSchedule) {
+        selectedSchedule?.let {
+            location = it.location
+            latitude = it.latitude ?: DEFAULT_LAT
+            longitude = it.longitude ?: DEFAULT_LNG
+            date = try {
+                LocalDate.parse(it.date)
+            } catch (e: Exception) {
+                LocalDate.now()
+            }
+            transportation = it.transportation
+            details = it.details
+        }
+    }
+
     /**
      * 일정 수정 저장 처리
      */
@@ -285,7 +302,7 @@ fun InfoCardScreen(
                             // 편집 완료 → 저장
                             onSave(
                                 ScheduleData(
-                                    id = selectedSchedule.id,
+                                    id = schedule.id,
                                     location = location,
                                     latitude = latitude,
                                     longitude = longitude,

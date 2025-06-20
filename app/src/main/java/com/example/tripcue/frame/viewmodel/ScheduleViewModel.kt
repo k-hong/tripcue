@@ -222,6 +222,7 @@ class ScheduleViewModel(
                 _schedules.value = _schedules.value.map {
                     if (it.id == schedule.id) schedule else it
                 }
+                loadScheduleDetails(cityDocId)
                 _errorMessage.value = null
                 onComplete(true)
             } catch (e: CancellationException) {
