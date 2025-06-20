@@ -98,6 +98,8 @@ dependencies {
     implementation(libs.composeWindowSizeClass)
 //    implementation(libs.org.jetbrains.kotlin.kapt.gradle.plugin)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.foundation)
+    implementation(libs.material3)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

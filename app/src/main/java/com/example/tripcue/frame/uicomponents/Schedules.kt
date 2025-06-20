@@ -126,7 +126,7 @@ fun Schedules(navController: NavHostController) { //스케쥴 타이틀 카드 �
                     modifier = Modifier
                         .fillMaxWidth().clickable {
                             // 클릭 시 selectedSchedule 키에 현재 스케줄을 저장하고 화면 이동
-                            sharedScheduleViewModel.setSchedule(schedule)
+                            sharedScheduleViewModel.setScheduleTitle(schedule)
                             navController.navigate(Routes.InventSchedule.createRoute(schedule.id)) // route 이름을 맞춰주세요
                         },
                     elevation = CardDefaults.cardElevation(4.dp)

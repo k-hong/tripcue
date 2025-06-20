@@ -1,8 +1,10 @@
 package com.example.tripcue.frame.viewmodel
 
 import androidx.lifecycle.ViewModel
+import com.example.tripcue.frame.model.ScheduleData
 import com.example.tripcue.frame.model.ScheduleTitle
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
@@ -13,16 +15,26 @@ import kotlinx.coroutines.flow.asStateFlow
 class SharedScheduleViewModel : ViewModel() {
 
     // 내부에서 변경 가능한 MutableStateFlow (선택된 ScheduleTitle or null)
-    private val _selectedSchedule = MutableStateFlow<ScheduleTitle?>(null)
+    private val _selectedScheduleTitle = MutableStateFlow<ScheduleTitle?>(null)
 
     // 외부에는 읽기 전용 StateFlow로 노출 (불변)
-    val selectedSchedule = _selectedSchedule.asStateFlow()
+    val selectedScheduleTitle = _selectedScheduleTitle.asStateFlow()
+
+    // 내부에서 변경 가능한 MutableStateFlow (선택된 ScheduleTitle or null)
+    private val _selectedScheduleData = MutableStateFlow<ScheduleData?>(null)
+
+    // 외부에는 읽기 전용 StateFlow로 노출 (불변)
+    val selectedScheduleData = _selectedScheduleData.asStateFlow()
 
     /**
      * 선택된 스케줄 제목을 설정하는 함수
      * @param schedule 공유할 ScheduleTitle 객체
      */
-    fun setSchedule(schedule: ScheduleTitle) {
-        _selectedSchedule.value = schedule
+    fun setScheduleTitle(schedule: ScheduleTitle) {
+        _selectedScheduleTitle.value = schedule
+    }
+
+    fun setScheduleData(schedule: ScheduleData) {
+        _selectedScheduleData.value = schedule
     }
 }

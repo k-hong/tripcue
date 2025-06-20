@@ -2,16 +2,21 @@ package com.example.tripcue.frame.uicomponents.Schedule
 
 import android.app.Activity
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -178,14 +183,15 @@ fun InfoCardScreen(
     cityDocId: String
 ) {
     val context = LocalContext.current
-    val activity = LocalActivity.current as ComponentActivity
     val weatherViewModel: WeatherViewModel = viewModel()
     val scheduleViewModel: ScheduleViewModel = viewModel()
 
     // 이전 화면에서 전달된 ScheduleData (selectedSchedule)
-    val selectedSchedule = navController.previousBackStackEntry
-        ?.savedStateHandle
-        ?.get<ScheduleData>("selectedSchedule")
+    val sharedScheduleViewModel: SharedScheduleViewModel = viewModel(
+        LocalActivity.current as ComponentActivity
+    )
+    val selectedSchedule by sharedScheduleViewModel.selectedScheduleData.collectAsState()
+    val schedule = selectedSchedule ?: return
 
     if (selectedSchedule == null) {
         Text("선택된 일정이 없습니다.")
@@ -193,7 +199,7 @@ fun InfoCardScreen(
     }
 
     // 초기값 세팅
-    val initialSchedule = selectedSchedule
+    val initialSchedule = selectedSchedule!!
     var isEditing by remember { mutableStateOf(false) }
 
     var location by remember { mutableStateOf(initialSchedule.location) }
@@ -245,6 +251,22 @@ fun InfoCardScreen(
         weatherViewModel.fetchWeatherForDateAndLocation(date, nx, ny)
     }
 
+    // selectedSchedule이 바뀔 때마다 상태 변수 초기화
+    LaunchedEffect(selectedSchedule) {
+        selectedSchedule?.let {
+            location = it.location
+            latitude = it.latitude ?: DEFAULT_LAT
+            longitude = it.longitude ?: DEFAULT_LNG
+            date = try {
+                LocalDate.parse(it.date)
+            } catch (e: Exception) {
+                LocalDate.now()
+            }
+            transportation = it.transportation
+            details = it.details
+        }
+    }
+
     /**
      * 일정 수정 저장 처리
      */
@@ -280,12 +302,12 @@ fun InfoCardScreen(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 TextButton(
                     onClick = {
-                        isEditing = !isEditing
+//                        isEditing = !isEditing
                         if (isEditing) {
                             // 편집 완료 → 저장
                             onSave(
                                 ScheduleData(
-                                    id = selectedSchedule.id,
+                                    id = schedule.id,
                                     location = location,
                                     latitude = latitude,
                                     longitude = longitude,
@@ -295,6 +317,10 @@ fun InfoCardScreen(
                                 ),
                                 cityDocId
                             )
+                            isEditing = false
+                        } else {
+                            // 수정 모드 시작
+                            isEditing = true
                         }
                         // UI 리셋
                         expanded = false
@@ -333,6 +359,7 @@ fun InfoCardScreen(
                 label = { Text("위치", fontSize = 12.sp, color = Color.Gray) },
                 leadingIcon = { Icon(Icons.Default.Place, contentDescription = null) },
                 enabled = isEditing,
+                readOnly = !isEditing,
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
             )
@@ -360,19 +387,40 @@ fun InfoCardScreen(
                 }
             }
 
-            // 날짜 선택
-            OutlinedTextField(
-                value = date.toString(),
-                onValueChange = {},
-                label = { Text("날짜", fontSize = 12.sp, color = Color.Gray) },
-                leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null) },
-                enabled = false,
-                readOnly = true,
-                modifier = Modifier.fillMaxWidth().then(
-                    if (isEditing) Modifier.clickable { showDatePicker = true } else Modifier
-                ),
-                textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(if (isEditing) Color.Transparent else Color.Transparent)
+                    .border(
+                        width = 1.dp,
+                        color = if (isEditing) Color.Transparent else Color.Transparent,
+                        shape = RoundedCornerShape(4.dp)
+                    )
+            ) {
+                // 날짜 선택
+                OutlinedTextField(
+                    value = date.toString(),
+                    onValueChange = {},
+                    label = { Text("날짜", fontSize = 12.sp, color = Color.Gray) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.CalendarToday,
+                            contentDescription = null,
+                            tint = if (isEditing) Color.Black else Color.Gray
+                        )
+                    },
+                    enabled = false,
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth().then(
+                        if (isEditing) Modifier.clickable { showDatePicker = true } else Modifier
+                    ),
+                    textStyle = TextStyle(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = if (isEditing) Color.Black else Color.Gray
+                    ),
+                )
+            }
 
             if (showDatePicker) {
                 DatePickerDialog(
@@ -421,9 +469,28 @@ fun InfoCardScreen(
                 label = { Text("상세 정보", fontSize = 12.sp, color = Color.Gray) },
                 leadingIcon = { Icon(Icons.Default.Description, contentDescription = null) },
                 enabled = isEditing,
+                readOnly = !isEditing,
                 modifier = Modifier.fillMaxWidth().height(100.dp),
                 textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
             )
+
+            // 일정 삭제 버튼
+            Button(
+                onClick = {
+                    scheduleViewModel.deleteSchedule(schedule.id, cityDocId) { success ->
+                        if (success) {
+                            Toast.makeText(context, "일정이 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                            navController.popBackStack()
+                        } else {
+                            Toast.makeText(context, "일정 삭제에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+            ) {
+                Text("일정 삭제", color = Color.White)
+            }
 
             // 닫기 버튼
             Button(

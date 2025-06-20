@@ -64,6 +64,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.UUID
 
+
 var location = ""
 var startDate: LocalDate = LocalDate.of(2000, 1, 1)
 var endDate: LocalDate = LocalDate.of(2000, 1, 1)
@@ -200,9 +201,10 @@ fun AddSchedule(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .height(300.dp) // 최대 높이를 제한하여 스크롤 가능하게 함
                                 .padding(top = 80.dp, bottom = 80.dp)
                         ) {
-                            items(searchResults.take(4).withIndex().toList()) { (index,result) ->
+                            items(searchResults.withIndex().toList()) { (index, result) ->
                                 val isThisSelected = (index == selectedIndex)
                                 Text(
                                     text = result,

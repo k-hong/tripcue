@@ -222,6 +222,7 @@ class ScheduleViewModel(
                 _schedules.value = _schedules.value.map {
                     if (it.id == schedule.id) schedule else it
                 }
+                loadScheduleDetails(cityDocId)
                 _errorMessage.value = null
                 onComplete(true)
             } catch (e: CancellationException) {
@@ -231,6 +232,34 @@ class ScheduleViewModel(
             } catch (e: Exception) {
                 Log.e("Coroutine", "에러 발생", e)
                 _errorMessage.value = e.message
+                onComplete(false)
+            }
+        }
+    }
+
+    fun deleteSchedule(scheduleId: String, cityDocId: String, onComplete: (Boolean) -> Unit) {
+        val uid = getCurrentUserUid() ?: run {
+            onComplete(false)
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                firestore.collection("users")
+                    .document(uid)
+                    .collection("schedules")
+                    .document(cityDocId)
+                    .collection("tasks")
+                    .document(scheduleId)
+                    .delete()
+                    .await()
+
+                // 삭제 후 상태 업데이트를 원하면 여기에 코드 추가 가능
+                loadScheduleDetails(cityDocId)
+
+                onComplete(true)
+            } catch (e: Exception) {
+                Log.e("ScheduleViewModel", "삭제 실패", e)
                 onComplete(false)
             }
         }
