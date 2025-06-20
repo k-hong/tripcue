@@ -106,14 +106,23 @@ fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text("저장된 일정 목록", style = MaterialTheme.typography.titleMedium)
-            Button(onClick = {
-                if (selectedSchedule != null) {
-                    // '추가하기' 버튼 클릭 시 상세 추가 화면으로 이동
-                    navController.navigate(Routes.AddDetails.createRoute(cityDocId))
+            Row { // 버튼들을 묶기 위한 Row
+                Button(onClick = {
+                    navController.navigate(Routes.MySchedulesMap.createRoute(cityDocId))
+                }) {
+                    Text("지도로 보기")
                 }
-            }) {
-                Text("추가하기")
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(onClick = {
+                    if (selectedSchedule != null) {
+                        // '추가하기' 버튼 클릭 시 상세 추가 화면으로 이동
+                        navController.navigate(Routes.AddDetails.createRoute(cityDocId))
+                    }
+                }) {
+                    Text("추가하기")
+                }
             }
+
         }
 
         Spacer(modifier = Modifier.height(8.dp))
