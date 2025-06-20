@@ -108,6 +108,7 @@ fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
             Text("저장된 일정 목록", style = MaterialTheme.typography.titleMedium)
             Row { // 버튼들을 묶기 위한 Row
                 Button(onClick = {
+                    // ◀ 변경된 이름의 경로를 호출합니다.
                     navController.navigate(Routes.MySchedulesMap.createRoute(cityDocId))
                 }) {
                     Text("지도로 보기")
