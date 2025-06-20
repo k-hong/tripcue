@@ -303,18 +303,18 @@ fun AddScheduleTest(
                     scheduleViewModel.addSchedule(newSchedule, cityDocId)
 
                     // 스케줄 타이틀 생성 및 공유 ViewModel에 저장
-                    val scheduleTitle = ScheduleTitle(
-                        id = cityDocId,
-                        title = finalLocation,
-                        location = finalLocation,
-                        startDate = selectedDate.toString(),
-                        endDate = selectedDate.toString()
-                    )
-                    sharedScheduleViewModel.setScheduleTitle(scheduleTitle)
+//                    val scheduleTitle = ScheduleTitle(
+//                        id = cityDocId,
+//                        title = finalLocation,
+//                        location = finalLocation,
+//                        startDate = selectedDate.toString(),
+//                        endDate = selectedDate.toString()
+//                    )
+//                    sharedScheduleViewModel.setScheduleTitle(scheduleTitle)
 
                     // 일정 목록 화면으로 이동
                     navController.navigate(Routes.InventSchedule.createRoute(cityDocId)) {
-                        popUpTo(Routes.AddSchedule.route) { inclusive = true } // 현재 화면 제거
+                        popUpTo(Routes.AddDetails.route) { inclusive = true } // 현재 화면 제거
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -328,7 +328,7 @@ fun AddScheduleTest(
             Button(
                 onClick = {
                     navController.navigate(Routes.InventSchedule.createRoute(cityDocId)) {
-                        popUpTo(Routes.AddSchedule.route) { inclusive = true }
+                        popUpTo(Routes.AddDetails.route) { inclusive = true }
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
