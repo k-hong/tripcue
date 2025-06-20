@@ -107,13 +107,5 @@ fun NavGraph(navController: NavHostController) {
 
             MapScreen(lat = lat, lng = lng, title = title, isDomestic = isDomestic)
         }
-
-        composable(
-            route = Routes.MySchedulesMap.route, // ◀ 이름 변경
-            arguments = listOf(navArgument("cityDocId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val cityDocId = backStackEntry.arguments?.getString("cityDocId") ?: ""
-            MySchedulesMapScreen(navController = navController, cityDocId = cityDocId) // ◀ 이름 변경
-        }
     }
 }
