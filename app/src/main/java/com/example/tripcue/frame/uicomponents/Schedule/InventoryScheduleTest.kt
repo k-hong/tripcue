@@ -231,14 +231,10 @@ fun DateGroupedSchedule(
                     pageSpacing = 16.dp
                 ) { pageIndex ->
                     val schedule = tasksForDate[pageIndex]
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp)
-                            .clickable { onScheduleClick(schedule) }
-                    ) {
-                        ScheduleCard(schedule = schedule)
-                    }
+                    ScheduleCard(
+                        schedule = schedule,
+                        onClick = { onScheduleClick(schedule) }
+                    )
                     LaunchedEffect(pageIndex) {
                         onScheduleView(schedule)
                     }

@@ -237,6 +237,34 @@ class ScheduleViewModel(
         }
     }
 
+    fun deleteSchedule(scheduleId: String, cityDocId: String, onComplete: (Boolean) -> Unit) {
+        val uid = getCurrentUserUid() ?: run {
+            onComplete(false)
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                firestore.collection("users")
+                    .document(uid)
+                    .collection("schedules")
+                    .document(cityDocId)
+                    .collection("tasks")
+                    .document(scheduleId)
+                    .delete()
+                    .await()
+
+                // 삭제 후 상태 업데이트를 원하면 여기에 코드 추가 가능
+                loadScheduleDetails(cityDocId)
+
+                onComplete(true)
+            } catch (e: Exception) {
+                Log.e("ScheduleViewModel", "삭제 실패", e)
+                onComplete(false)
+            }
+        }
+    }
+
     /**
      * 선택된 스케줄 상태를 직접 세팅 (UI 등에서 호출)
      */

@@ -2,6 +2,7 @@ package com.example.tripcue.frame.uicomponents.Schedule
 
 import android.app.Activity
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.activity.ComponentActivity
@@ -441,6 +442,24 @@ fun InfoCardScreen(
                 modifier = Modifier.fillMaxWidth().height(100.dp),
                 textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
             )
+
+            // 일정 삭제 버튼
+            Button(
+                onClick = {
+                    scheduleViewModel.deleteSchedule(schedule.id, cityDocId) { success ->
+                        if (success) {
+                            Toast.makeText(context, "일정이 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                            navController.popBackStack()
+                        } else {
+                            Toast.makeText(context, "일정 삭제에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+            ) {
+                Text("일정 삭제", color = Color.White)
+            }
 
             // 닫기 버튼
             Button(
