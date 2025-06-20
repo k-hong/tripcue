@@ -314,7 +314,7 @@ fun AddScheduleTest(
 
                     // 일정 목록 화면으로 이동
                     navController.navigate(Routes.InventSchedule.createRoute(cityDocId)) {
-                        popUpTo(Routes.AddSchedule.route) { inclusive = true } // 현재 화면 제거
+                        popUpTo(Routes.AddDetails.route) { inclusive = true } // 현재 화면 제거
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -328,7 +328,7 @@ fun AddScheduleTest(
             Button(
                 onClick = {
                     navController.navigate(Routes.InventSchedule.createRoute(cityDocId)) {
-                        popUpTo(Routes.AddSchedule.route) { inclusive = true }
+                        popUpTo(Routes.AddDetails.route) { inclusive = true }
                     }
                 },
                 modifier = Modifier.fillMaxWidth()

@@ -27,18 +27,19 @@ sealed class Routes (val route: String, val isRoot : Boolean = true) {
 
     companion object{
         fun getRoutes(route: String): Routes {
-            return when(route){
-                Home.route -> Home
-                AddSchedule.route -> AddSchedule
-                Schedules.route -> Schedules
-                Login.route -> Login
-                SignUp.route -> SignUp
-                FillProfile.route -> FillProfile
-                AddDetails.route -> AddDetails
-                InventSchedule.route -> InventSchedule
-                InfoCard.route -> InfoCard
-                FillProfileSurvey.route -> FillProfileSurvey
-                MySchedulesMap.route -> MySchedulesMap
+            return when{
+                route.startsWith("InventoryScheduleTest") -> InventSchedule
+                route.startsWith("AddScheduleTest") -> AddDetails
+                route.startsWith("InfoCardScreen") -> InfoCard
+                route.startsWith("map_screen") -> PlaceDetail
+                route.startsWith("my_schedules_map") -> MySchedulesMap
+                route == Home.route -> Home
+                route == AddSchedule.route -> AddSchedule
+                route == Schedules.route -> Schedules
+                route == Login.route -> Login
+                route == SignUp.route -> SignUp
+                route == FillProfile.route -> FillProfile
+                route == FillProfileSurvey.route -> FillProfileSurvey
 
                 else -> Home
             }
