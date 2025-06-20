@@ -21,6 +21,7 @@ sealed class Routes (val route: String, val isRoot : Boolean = true) {
         fun createRoute(lat: Double, lng: Double, title: String, isDomestic: Boolean) =
             "map_screen/$lat/$lng/$title/$isDomestic"
     }
+    object MySchedulesMap : Routes("my_schedules_map", isRoot = false)
 
     companion object{
         fun getRoutes(route: String): Routes {
