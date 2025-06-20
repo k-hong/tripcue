@@ -9,10 +9,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -355,6 +359,7 @@ fun InfoCardScreen(
                 label = { Text("위치", fontSize = 12.sp, color = Color.Gray) },
                 leadingIcon = { Icon(Icons.Default.Place, contentDescription = null) },
                 enabled = isEditing,
+                readOnly = !isEditing,
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
             )
@@ -382,19 +387,40 @@ fun InfoCardScreen(
                 }
             }
 
-            // 날짜 선택
-            OutlinedTextField(
-                value = date.toString(),
-                onValueChange = {},
-                label = { Text("날짜", fontSize = 12.sp, color = Color.Gray) },
-                leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null) },
-                enabled = false,
-                readOnly = true,
-                modifier = Modifier.fillMaxWidth().then(
-                    if (isEditing) Modifier.clickable { showDatePicker = true } else Modifier
-                ),
-                textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(if (isEditing) Color.Transparent else Color.Transparent)
+                    .border(
+                        width = 1.dp,
+                        color = if (isEditing) Color.Transparent else Color.Transparent,
+                        shape = RoundedCornerShape(4.dp)
+                    )
+            ) {
+                // 날짜 선택
+                OutlinedTextField(
+                    value = date.toString(),
+                    onValueChange = {},
+                    label = { Text("날짜", fontSize = 12.sp, color = Color.Gray) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.CalendarToday,
+                            contentDescription = null,
+                            tint = if (isEditing) Color.Black else Color.Gray
+                        )
+                    },
+                    enabled = false,
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth().then(
+                        if (isEditing) Modifier.clickable { showDatePicker = true } else Modifier
+                    ),
+                    textStyle = TextStyle(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = if (isEditing) Color.Black else Color.Gray
+                    ),
+                )
+            }
 
             if (showDatePicker) {
                 DatePickerDialog(
@@ -443,6 +469,7 @@ fun InfoCardScreen(
                 label = { Text("상세 정보", fontSize = 12.sp, color = Color.Gray) },
                 leadingIcon = { Icon(Icons.Default.Description, contentDescription = null) },
                 enabled = isEditing,
+                readOnly = !isEditing,
                 modifier = Modifier.fillMaxWidth().height(100.dp),
                 textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
             )
