@@ -298,7 +298,7 @@ fun InfoCardScreen(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 TextButton(
                     onClick = {
-                        isEditing = !isEditing
+//                        isEditing = !isEditing
                         if (isEditing) {
                             // 편집 완료 → 저장
                             onSave(
@@ -313,6 +313,10 @@ fun InfoCardScreen(
                                 ),
                                 cityDocId
                             )
+                            isEditing = false
+                        } else {
+                            // 수정 모드 시작
+                            isEditing = true
                         }
                         // UI 리셋
                         expanded = false
