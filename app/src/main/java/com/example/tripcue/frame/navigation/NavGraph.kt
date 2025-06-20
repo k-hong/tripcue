@@ -49,56 +49,62 @@ fun NavGraph(navController: NavHostController) {
             FillProfileSurveyScreen(navController)
         }
 
-        // 로그인 후 메인화면 (Scaffold 포함)
         composable(Routes.Home.route) {
             MainScreen2(navController)
         }
 
-        // 내부 기능 화면들
         composable(Routes.AddSchedule.route) {
             AddSchedule(navController, onDone = { navController.popBackStack() })
         }
+
         composable(
-            route = Routes.AddDetails.route,
+            route = "${Routes.AddDetails.route}",
             arguments = listOf(navArgument("cityDocId") { type = NavType.StringType })
         ) {
             val cityDocId = it.arguments?.getString("cityDocId") ?: return@composable
             AddScheduleTest(navController, cityDocId)
         }
+
         composable(Routes.Schedules.route) {
             Schedules(navController)
         }
+
         composable(
-            route = Routes.InfoCard.route,
+            route = "${Routes.InfoCard.route}",
             arguments = listOf(navArgument("cityDocId") { type = NavType.StringType })
         ) {
             val cityDocId = it.arguments?.getString("cityDocId") ?: return@composable
             InfoCardScreen(navController, cityDocId)
         }
+
         composable(
-            route = Routes.InventSchedule.route,
+            route = "${Routes.InventSchedule.route}",
             arguments = listOf(navArgument("cityDocId") { type = NavType.StringType })
         ) {
             val cityDocId = it.arguments?.getString("cityDocId") ?: return@composable
             InventoryScheduleTest(navController, cityDocId)
         }
+
         composable("edit_profile") {
             EditProfileScreen(navController)
         }
+
         composable(
             route = Routes.PlaceDetail.route,
             arguments = listOf(
                 navArgument("lat") { type = NavType.FloatType },
                 navArgument("lng") { type = NavType.FloatType },
                 navArgument("title") { type = NavType.StringType },
-                navArgument("isDomestic") { type = NavType.BoolType }
+                navArgument("isDomestic") { type = NavType.BoolType } // [추가]
             )
         ) { backStackEntry ->
             val lat = backStackEntry.arguments?.getFloat("lat")?.toDouble() ?: 0.0
             val lng = backStackEntry.arguments?.getFloat("lng")?.toDouble() ?: 0.0
             val encodedTitle = backStackEntry.arguments?.getString("title") ?: ""
-            val isDomestic = backStackEntry.arguments?.getBoolean("isDomestic") ?: true
+            val isDomestic = backStackEntry.arguments?.getBoolean("isDomestic") ?: true // [추가]
+
             val title = URLDecoder.decode(encodedTitle, StandardCharsets.UTF_8.name())
+
             MapScreen(lat = lat, lng = lng, title = title, isDomestic = isDomestic)
         }
 

@@ -45,4 +45,3 @@ sealed class Routes (val route: String, val isRoot : Boolean = true) {
         }
     }
 }
-
