@@ -16,9 +16,6 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -43,7 +40,6 @@ import kotlin.math.absoluteValue
  * @param navController 네비게이션 제어를 위한 컨트롤러
  * @param cityDocId 현재 선택된 도시 문서 ID (스케줄 식별자)
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
     val context = LocalContext.current
@@ -117,9 +113,8 @@ fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text("저장된 일정 목록", style = MaterialTheme.typography.titleMedium)
-            Row { // 버튼들을 묶기 위한 Row
+            Row {
                 Button(onClick = {
-                    // ◀ 변경된 이름의 경로를 호출합니다.
                     navController.navigate(Routes.MySchedulesMap.createRoute(cityDocId))
                 }) {
                     Text("지도로 보기")
@@ -127,21 +122,20 @@ fun InventoryScheduleTest(navController: NavHostController, cityDocId: String) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(onClick = {
                     if (selectedSchedule != null) {
-                        // '추가하기' 버튼 클릭 시 상세 추가 화면으로 이동
                         navController.navigate(Routes.AddDetails.createRoute(cityDocId))
                     }
                 }) {
                     Text("추가하기")
                 }
             }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         // 저장된 스케줄 세부 목록을 LazyColumn 안에 배치
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
+        LazyColumn(modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
         ) {
             item {
                 // 스케줄 카드들을 가로 슬라이드 뷰 (Pager) 형태로 보여줌
@@ -261,4 +255,3 @@ fun DateGroupedSchedule(
         }
     }
 }
-
