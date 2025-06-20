@@ -13,6 +13,7 @@ import com.example.tripcue.frame.uicomponents.MainScreen2
 import com.example.tripcue.frame.uicomponents.Schedule.AddScheduleTest
 import com.example.tripcue.frame.uicomponents.Schedule.InfoCardScreen
 import com.example.tripcue.frame.uicomponents.Schedule.InventoryScheduleTest
+import com.example.tripcue.frame.uicomponents.Schedule.MySchedulesMapScreen
 import com.example.tripcue.frame.uicomponents.Schedules
 import com.example.tripcue.frame.uicomponents.home.MapScreen
 import com.example.tripcue.frame.uicomponents.signup.FillProfileScreen
@@ -105,6 +106,14 @@ fun NavGraph(navController: NavHostController) {
             val title = URLDecoder.decode(encodedTitle, StandardCharsets.UTF_8.name())
 
             MapScreen(lat = lat, lng = lng, title = title, isDomestic = isDomestic)
+        }
+
+        composable(
+            route = Routes.MySchedulesMap.route, // ◀ 이름 변경
+            arguments = listOf(navArgument("cityDocId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val cityDocId = backStackEntry.arguments?.getString("cityDocId") ?: ""
+            MySchedulesMapScreen(navController = navController, cityDocId = cityDocId) // ◀ 이름 변경
         }
     }
 }
